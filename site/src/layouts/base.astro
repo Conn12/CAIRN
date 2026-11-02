@@ -1,0 +1,39 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title,
+  description = '一个人的学习日志。一路走，一路堆石头。',
+} = Astro.props;
+
+const pageTitle = title ? `${title} · CAIRN` : 'CAIRN · 一路走，一路堆石头';
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="logo" href="/">CAIRN</a>
+      <span class="tagline">一路走，一路堆石头</span>
+    </header>
+    <main>
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <span>CAIRN · 自用的学习日志</span>
+    </footer>
+  </body>
+</html>

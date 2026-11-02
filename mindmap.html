@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAIRN · 思维导图</title>
+<style>
+  :root{
+    --bg:#0b0d11;
+    --bg2:#11141a;
+    --line:#252a35;
+    --text:#e6e9ef;
+    --dim:#8b93a7;
+    --gold:#e8b96a;
+    --f1:#7aa2f7;
+    --f2:#bb9af7;
+    --f3:#7dcfff;
+    --f4:#9ece6a;
+    --f5:#e0af68;
+    --f6:#f7768e;
+    --f7:#73daca;
+    --f8:#ff9e64;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(900px 600px at 50% 45%, #171b24 0%, transparent 70%),
+      var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif;
+    min-height:100vh;
+    padding:48px 24px 80px;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  header{
+    text-align:center;
+    margin-bottom:56px;
+  }
+  header h1{
+    font-size:26px;
+    letter-spacing:.28em;
+    font-weight:600;
+    color:var(--gold);
+    text-indent:.28em;
+  }
+  header p{
+    margin-top:10px;
+    font-size:13px;
+    color:var(--dim);
+    letter-spacing:.08em;
+  }
+
+  .map{
+    display:flex;
+    align-items:stretch;
+    justify-content:center;
+    max-width:1280px;
+    margin:0 auto;
+  }
+
+  .side{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:18px;
+    width:330px;
+    flex:0 0 330px;
+  }
+  .side.left{align-items:flex-end}
+  .side.right{align-items:flex-start}
+
+  .branch{
+    position:relative;
+    width:100%;
+    background:linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.012));
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:14px 16px 15px;
+    transition:border-color .25s ease, transform .25s ease, box-shadow .25s ease;
+  }
+  .branch:hover{
+    border-color:var(--c);
+    transform:translateY(-2px);
+    box-shadow:0 10px 30px -12px var(--c);
+  }
+  .branch h2{
+    font-size:14px;
+    font-weight:600;
+    color:var(--c);
+    letter-spacing:.06em;
+    margin-bottom:9px;
+    display:flex;
+    align-items:center;
+    gap:7px;
+  }
+  .branch h2::before{
+    content:"";
+    width:6px;height:6px;border-radius:50%;
+    background:var(--c);
+    box-shadow:0 0 10px var(--c);
+    flex:0 0 auto;
+  }
+  .branch ul{
+    list-style:none;
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+  }
+  .branch li{
+    font-size:12.5px;
+    color:#b9c0d0;
+    line-height:1.55;
+    padding-left:13px;
+    position:relative;
+  }
+  .branch li::before{
+    content:"";
+    position:absolute;
+    left:0;top:.62em;
+    width:4px;height:1px;
+    background:var(--dim);
+    opacity:.7;
+  }
+
+  /* connectors */
+  .left .branch::after{
+    content:"";
+    position:absolute;
+    left:100%;
+    top:50%;
+    width:56px;
+    height:1px;
+    background:linear-gradient(90deg, var(--c), transparent);
+    opacity:.75;
+  }
+  .right .branch::before{
+    content:"";
+    position:absolute;
+    right:100%;
+    top:50%;
+    width:56px;
+    height:1px;
+    background:linear-gradient(270deg, var(--c), transparent);
+    opacity:.75;
+  }
+
+  .core{
+    position:relative;
+    flex:0 0 220px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 28px;
+  }
+  .core::before{
+    content:"";
+    position:absolute;
+    left:50%;
+    top:4%;
+    bottom:4%;
+    width:1px;
+    background:linear-gradient(180deg, transparent, #3a4152 18%, #3a4152 82%, transparent);
+  }
+  .core-node{
+    position:relative;
+    z-index:2;
+    text-align:center;
+    padding:26px 18px;
+    border-radius:20px;
+    background:radial-gradient(circle at 50% 0%, rgba(232,185,106,.16), rgba(232,185,106,.03) 70%);
+    border:1px solid rgba(232,185,106,.4);
+    box-shadow:0 0 60px -14px rgba(232,185,106,.6), inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .core-node .logo{
+    font-size:23px;
+    letter-spacing:.22em;
+    text-indent:.22em;
+    font-weight:700;
+    color:var(--gold);
+  }
+  .core-node .tag{
+    margin-top:9px;
+    font-size:11.5px;
+    color:#a89a80;
+    letter-spacing:.05em;
+    line-height:1.6;
+  }
+
+  footer{
+    text-align:center;
+    margin-top:60px;
+    font-size:12px;
+    color:#5c6376;
+    letter-spacing:.05em;
+  }
+
+  @media (max-width:1080px){
+    .map{flex-direction:column;align-items:stretch;gap:16px}
+    .side,.side.left,.side.right{width:100%;flex:1 1 auto;align-items:stretch}
+    .left .branch::after,.right .branch::before{display:none}
+    .core{flex:0 0 auto;order:-1;padding:8px 0 22px}
+    .core::before{display:none}
+  }
+</style>
+</head>
+<body>
+
+  <header>
+    <h1>CAIRN</h1>
+    <p>一路走，一路堆石头</p>
+  </header>
+
+  <div class="map">
+
+    <!-- 左：是什么 / 为什么 -->
+    <div class="side left">
+
+      <div class="branch" style="--c:var(--f1)">
+        <h2>定位</h2>
+        <ul>
+          <li>一个人的学习日志</li>
+          <li>第一用户是我自己</li>
+          <li>顺便给别人看</li>
+        </ul>
+      </div>
+
+      <div class="branch" style="--c:var(--f2)">
+        <h2>内容</h2>
+        <ul>
+          <li>学习记录（最高频）</li>
+          <li>项目复盘</li>
+          <li>工具说明</li>
+          <li>3D / 实验（低频）</li>
+        </ul>
+      </div>
+
+      <div class="branch" style="--c:var(--f3)">
+        <h2>节奏</h2>
+        <ul>
+          <li>每周 1–2 篇</li>
+          <li>10 分钟能发一篇</li>
+          <li>丑着发，别打磨</li>
+        </ul>
+      </div>
+
+      <div class="branch" style="--c:var(--f4)">
+        <h2>成功标准</h2>
+        <ul>
+          <li>30 天：6 篇</li>
+          <li>90 天：还在更新</li>
+          <li>180 天：有自用工具</li>
+          <li>不看访问量</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- 中：核心 -->
+    <div class="core">
+      <div class="core-node">
+        <div class="logo">CAIRN</div>
+        <div class="tag">一个人的石头堆<br>每走一步，留一个记号</div>
+      </div>
+    </div>
+
+    <!-- 右：怎么做 -->
+    <div class="side right">
+
+      <div class="branch" style="--c:var(--f5)">
+        <h2>技术</h2>
+        <ul>
+          <li>Astro + Markdown</li>
+          <li>静态托管</li>
+          <li>零后端 / 零登录</li>
+          <li>不用境外 CDN</li>
+        </ul>
+      </div>
+
+      <div class="branch" style="--c:var(--f6)">
+        <h2>分期</h2>
+        <ul>
+          <li>Phase 0（3 天）：能跑能发</li>
+          <li>Phase 1（1 月）：攒 6 篇</li>
+          <li>Phase 2（2–3 月）：加工具</li>
+          <li>Phase 3：按需</li>
+        </ul>
+      </div>
+
+      <div class="branch" style="--c:var(--f7)">
+        <h2>红线</h2>
+        <ul>
+          <li>新点子先是文章</li>
+          <li>站是索引不是宿主</li>
+          <li>不加登录 / 数据库</li>
+          <li>80 篇前不分类</li>
+        </ul>
+      </div>
+
+      <div class="branch" style="--c:var(--f8)">
+        <h2>风险与对策</h2>
+        <ul>
+          <li>改样式上瘾 → 限死 3 天</li>
+          <li>断更 → 降低单篇门槛</li>
+          <li>功能膨胀 → 红线机制</li>
+          <li>国内打不开 → 资源自托管</li>
+        </ul>
+      </div>
+
+    </div>
+
+  </div>
+
+  <footer>D:\CAIRN\PLAN.md · 双击本文件即可查看</footer>
+
+</body>
+</html>
