@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import Sidebar from '../components/sidebar.astro';
 import { getCollection } from 'astro:content';
+import { formatDate } from '../utils/date';
 
 interface Props {
   title?: string;
@@ -19,6 +20,11 @@ const posts = (await getCollection('posts', ({ data }) => !data.draft)).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
 );
 
+const latest = posts[0];
+const meta = latest
+  ? `${posts.length} 篇 · 最后更新 ${formatDate(latest.data.date)}`
+  : '还没有文章';
+
 const pageTitle = title ? `${title} · CAIRN` : 'CAIRN · 一路走，一路堆石头';
 ---
 
@@ -34,6 +40,16 @@ const pageTitle = title ? `${title} · CAIRN` : 'CAIRN · 一路走，一路堆�
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   </head>
   <body>
+    <header class="site-header">
+      <div class="header-inner">
+        <div class="header-brand">
+          <a class="logo" href="/">CAIRN</a>
+          <span class="tagline">一路走，一路堆石头</span>
+        </div>
+        <span class="header-meta">{meta}</span>
+      </div>
+    </header>
+
     <div class="shell">
       <Sidebar posts={posts} currentId={currentId} />
 

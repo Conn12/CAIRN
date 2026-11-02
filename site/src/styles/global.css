@@ -5,7 +5,6 @@
 :root {
   --bg: #0b0d11;
   --bg-soft: #11141a;
-  --bg-side: #0e1117;
   --line: #252a35;
   --text: #e6e9ef;
   --dim: #8b93a7;
@@ -83,31 +82,33 @@ img {
   outline-offset: 2px;
 }
 
-/* ---------- 双栏骨架 ---------- */
+/* ---------- 顶栏 ---------- */
 
-.shell {
-  display: grid;
-  grid-template-columns: 17.5rem minmax(0, 1fr);
-  min-height: 100vh;
-}
-
-/* ---------- 左侧目录 ---------- */
-
-.sidebar {
+.site-header {
   position: sticky;
   top: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  height: 100vh;
-  padding: 2.25rem 1.25rem 1.25rem;
-  overflow-y: auto;
-  background: linear-gradient(180deg, var(--bg-side) 0%, var(--bg) 100%);
-  border-right: 1px solid var(--line);
+  z-index: 20;
+  background: rgba(11, 13, 17, 0.88);
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
-.sidebar-head {
-  padding: 0 0.75rem;
+.header-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  max-width: 1180px;
+  height: 4.25rem;
+  margin: 0 auto;
+  padding: 0 clamp(1.25rem, 4vw, 2.5rem);
+}
+
+.header-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 0.9rem;
+  flex-wrap: wrap;
 }
 
 .logo {
@@ -123,14 +124,39 @@ img {
 }
 
 .tagline {
-  margin-top: 0.35rem;
   font-size: 0.72rem;
   color: var(--faint);
   letter-spacing: 0.06em;
 }
 
-.sidebar-nav {
-  flex: 1;
+.header-meta {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  color: var(--faint);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* ---------- 双栏骨架 ---------- */
+
+.shell {
+  display: grid;
+  grid-template-columns: 15.5rem minmax(0, 1fr);
+  gap: 3.5rem;
+  align-items: start;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 2.75rem clamp(1.25rem, 4vw, 2.5rem) 3rem;
+}
+
+/* ---------- 左侧目录 ---------- */
+
+.sidebar {
+  position: sticky;
+  top: 5.75rem;
+  max-height: calc(100vh - 7rem);
+  overflow-y: auto;
 }
 
 .nav-label {
@@ -218,16 +244,6 @@ img {
   color: var(--gold-dim);
 }
 
-.sidebar-foot {
-  margin-top: auto;
-  padding: 0.75rem 0.75rem 0;
-  border-top: 1px solid var(--line);
-  font-family: var(--mono);
-  font-size: 0.64rem;
-  color: var(--faint);
-  letter-spacing: 0.04em;
-}
-
 /* 移动端目录 */
 
 .sidebar-mobile {
@@ -279,7 +295,6 @@ img {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  padding: 0 clamp(1.5rem, 5vw, 5rem);
 }
 
 main {
@@ -287,7 +302,6 @@ main {
   width: 100%;
   max-width: 44rem;
   margin: 0 auto;
-  padding-top: 4rem;
 }
 
 /* ---------- 文章头部 ---------- */
@@ -457,8 +471,8 @@ main {
 .site-footer {
   width: 100%;
   max-width: 44rem;
-  margin: 0 auto;
-  padding: 2rem 0 2.5rem;
+  margin: 3rem auto 0;
+  padding-top: 2rem;
   border-top: 1px solid var(--line);
   font-size: 0.68rem;
   color: var(--faint);
@@ -496,17 +510,23 @@ main {
 /* ---------- 窄屏：目录收到顶部 ---------- */
 
 @media (max-width: 900px) {
+  .header-inner {
+    height: 3.75rem;
+  }
+
+  .header-meta {
+    display: none;
+  }
+
   .shell {
     display: block;
+    padding-top: 1.5rem;
   }
 
   .sidebar {
     position: static;
-    height: auto;
-    padding: 1.25rem;
+    max-height: none;
     overflow: visible;
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
   }
 
   .sidebar-nav {
@@ -515,15 +535,6 @@ main {
 
   .sidebar-mobile {
     display: block;
-    margin-top: 1rem;
-  }
-
-  .sidebar-foot {
-    display: none;
-  }
-
-  .content {
-    padding: 0 1.25rem;
   }
 
   main {

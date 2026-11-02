@@ -1,7 +1,6 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import PostList from './post-list.astro';
-import { formatDate } from '../utils/date';
 
 interface Props {
   posts: CollectionEntry<'posts'>[];
@@ -9,15 +8,9 @@ interface Props {
 }
 
 const { posts, currentId } = Astro.props;
-const latest = posts[0];
 ---
 
 <aside class="sidebar">
-  <div class="sidebar-head">
-    <a class="logo" href="/">CAIRN</a>
-    <p class="tagline">一路走，一路堆石头</p>
-  </div>
-
   <details class="sidebar-mobile">
     <summary>
       <span>文章目录</span>
@@ -35,12 +28,4 @@ const latest = posts[0];
     </p>
     <PostList posts={posts} currentId={currentId} />
   </nav>
-
-  <div class="sidebar-foot">
-    {
-      latest
-        ? `最后更新 ${formatDate(latest.data.date)}`
-        : '还没有文章'
-    }
-  </div>
 </aside>
