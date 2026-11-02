@@ -1,671 +1,994 @@
-<div class="ota-anim" data-ota-anim>
-  <div class="ota-anim-head">
-    <div>
-      <span class="ota-anim-kicker">外部 Flash 路径</span>
-      <p class="ota-anim-caption" data-caption>准备中</p>
-    </div>
-    <button type="button" class="ota-anim-btn" data-replay>重播</button>
-  </div>
+<div class="ota-3d" data-ota-3d>
+  <div class="ota-3d-canvas" data-canvas></div>
 
-  <div class="ota-anim-stage">
-    <div class="ota-source">
-      <div class="ota-chip">
-        <span class="ota-chip-name">上位机</span>
-        <span class="ota-chip-meta">BIN → AES 加密包</span>
+  <div class="ota-3d-ui">
+    <div class="ota-3d-top">
+      <div class="ota-3d-panel ota-3d-status-panel">
+        <span class="ota-3d-kicker">CAIRN / OTA</span>
+        <p class="ota-3d-status" data-status>待机</p>
       </div>
-      <div class="ota-package" data-package aria-hidden="true">
-        <span></span><span></span><span></span><span></span>
-        <span></span><span></span><span></span><span></span>
+
+      <div class="ota-3d-panel ota-3d-specs">
+        <span>EXT <b>W25Q32 · 4 MB</b></span>
+        <span>APP <b>0x08008000 · 96 KB</b></span>
+        <span>AES <b>AES-256-CBC</b></span>
       </div>
     </div>
 
-    <div class="ota-wire" data-wire="send">
-      <span class="ota-wire-label">USART1 · YMODEM</span>
-      <i class="ota-byte"></i><i class="ota-byte"></i><i class="ota-byte"></i>
-    </div>
-
-    <div class="ota-memory" data-memory="ext">
-      <div class="ota-memory-head">
-        <span class="ota-memory-name">W25Q32 · 外部 Flash</span>
-        <span class="ota-memory-meta">4 MB · 4 KB 扇区</span>
+    <div class="ota-3d-bottom">
+      <div class="ota-3d-panel ota-3d-caption-panel">
+        <p class="ota-3d-caption" data-caption>等待固件...</p>
+        <div class="ota-3d-progress" aria-hidden="true">
+          <span data-progress></span>
+        </div>
       </div>
-      <div class="ota-cells" data-cells="ext" aria-hidden="true">
-        <span class="ota-cell"></span><span class="ota-cell"></span>
-        <span class="ota-cell"></span><span class="ota-cell"></span>
-        <span class="ota-cell"></span><span class="ota-cell"></span>
-        <span class="ota-cell"></span><span class="ota-cell"></span>
-        <span class="ota-cell"></span><span class="ota-cell"></span>
-        <span class="ota-cell"></span><span class="ota-cell"></span>
-        <span class="ota-cell"></span><span class="ota-cell"></span>
-        <span class="ota-cell"></span><span class="ota-cell"></span>
-      </div>
-      <div class="ota-memory-foot">
-        <span data-ext-status>空</span>
-        <span>暂存加密包</span>
-      </div>
-    </div>
-
-    <div class="ota-wire ota-wire-aes" data-wire="decrypt">
-      <span class="ota-lock" data-lock aria-hidden="true"><i></i></span>
-      <span class="ota-wire-label">读取 · AES-256-CBC 解密</span>
-      <i class="ota-byte"></i><i class="ota-byte"></i><i class="ota-byte"></i>
-    </div>
-
-    <div class="ota-memory" data-memory="int">
-      <div class="ota-memory-head">
-        <span class="ota-memory-name">内部 Flash · APP 区</span>
-        <span class="ota-memory-meta">0x08008000 · 96 KB</span>
-      </div>
-      <div class="ota-cells ota-cells-int" data-cells="int" aria-hidden="true">
-        <span class="ota-cell"></span><span class="ota-cell"></span>
-        <span class="ota-cell"></span><span class="ota-cell"></span>
-        <span class="ota-cell"></span><span class="ota-cell"></span>
-        <span class="ota-cell"></span><span class="ota-cell"></span>
-      </div>
-      <div class="ota-memory-foot">
-        <span data-int-status>旧 APP</span>
-        <span>解密后的固件</span>
-      </div>
-    </div>
-
-    <div class="ota-wire" data-wire="jump">
-      <span class="ota-wire-label">校验向量表 · 设置 VTOR / MSP</span>
-      <i class="ota-byte"></i><i class="ota-byte"></i>
-    </div>
-
-    <div class="ota-app" data-app>
-      <div>
-        <span class="ota-app-name">APP 运行</span>
-        <span class="ota-app-meta">_LED1 · LED2 / LED3</span>
-      </div>
-      <div class="ota-app-signals">
-        <span class="ota-check" data-check>✓</span>
-        <i class="ota-led" data-led></i>
-      </div>
+      <button type="button" class="ota-3d-btn" data-replay>重播</button>
     </div>
   </div>
 
-  <div class="ota-anim-foot">
-    <p class="ota-anim-note">
-      按最终路径简化；当前代码尚未校验 YMODEM CRC。
-    </p>
-    <div class="ota-anim-progress" aria-hidden="true">
-      <span data-progress></span>
-    </div>
-  </div>
+  <p class="ota-3d-fallback">当前浏览器不支持 WebGL，3D 场景无法显示。</p>
 </div>
 
 <script>
-  const root = document.querySelector('[data-ota-anim]');
+  import * as THREE from 'three';
+  import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+  import {
+    CSS2DObject,
+    CSS2DRenderer,
+  } from 'three/addons/renderers/CSS2DRenderer.js';
+
+  const root = document.querySelector('[data-ota-3d]');
 
   if (root) {
-    const caption = root.querySelector('[data-caption]');
+    const canvasHost = root.querySelector('[data-canvas]');
+    const statusEl = root.querySelector('[data-status]');
+    const captionEl = root.querySelector('[data-caption]');
+    const progressEl = root.querySelector('[data-progress]');
     const replayBtn = root.querySelector('[data-replay]');
-    const packageEl = root.querySelector('[data-package]');
-    const extCells = [
-      ...root.querySelectorAll('[data-cells="ext"] .ota-cell'),
-    ];
-    const intCells = [
-      ...root.querySelectorAll('[data-cells="int"] .ota-cell'),
-    ];
-    const extStatus = root.querySelector('[data-ext-status]');
-    const intStatus = root.querySelector('[data-int-status]');
-    const progress = root.querySelector('[data-progress]');
-    const lock = root.querySelector('[data-lock]');
-    const check = root.querySelector('[data-check]');
-    const led = root.querySelector('[data-led]');
-    const wires = Object.fromEntries(
-      [...root.querySelectorAll('[data-wire]')].map((wire) => [
-        wire.dataset.wire,
-        wire,
-      ]),
-    );
-    const memoryEls = {
-      ext: root.querySelector('[data-memory="ext"]'),
-      int: root.querySelector('[data-memory="int"]'),
-      app: root.querySelector('[data-app]'),
-    };
 
-    let token = 0;
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+      });
+    } catch {
+      root.classList.add('is-failed');
+    }
 
-    const sleep = (ms, id) =>
-      new Promise((resolve, reject) => {
-        setTimeout(() => {
-          if (id === token) resolve();
-          else reject(new Error('cancelled'));
-        }, ms);
+    if (renderer) {
+      const isNarrow = window.innerWidth < 640;
+      const scene = new THREE.Scene();
+      scene.fog = new THREE.Fog(0x07090d, 16, 42);
+
+      const camera = new THREE.PerspectiveCamera(
+        isNarrow ? 48 : 38,
+        1,
+        0.1,
+        100,
+      );
+      camera.position.set(0, isNarrow ? 8 : 6.2, isNarrow ? 16.5 : 14.5);
+
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.15;
+
+      renderer.domElement.style.display = 'block';
+      renderer.domElement.style.width = '100%';
+      renderer.domElement.style.height = '100%';
+      canvasHost.appendChild(renderer.domElement);
+
+      const labelRenderer = new CSS2DRenderer();
+      labelRenderer.domElement.style.position = 'absolute';
+      labelRenderer.domElement.style.inset = '0';
+      labelRenderer.domElement.style.pointerEvents = 'none';
+      labelRenderer.domElement.style.zIndex = '1';
+      canvasHost.appendChild(labelRenderer.domElement);
+
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.06;
+      controls.enablePan = false;
+      controls.autoRotate = true;
+      controls.autoRotateSpeed = 0.35;
+      controls.minDistance = 9;
+      controls.maxDistance = 26;
+      controls.maxPolarAngle = Math.PI * 0.48;
+      controls.target.set(0, isNarrow ? 2.2 : 1.5, 0);
+
+      scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+      scene.add(new THREE.HemisphereLight(0x7dcfff, 0x0b0d11, 0.45));
+
+      const keyLight = new THREE.DirectionalLight(0xffffff, 0.85);
+      keyLight.position.set(5, 10, 7);
+      scene.add(keyLight);
+
+      const cyanLight = new THREE.PointLight(0x7dcfff, 26, 22, 2);
+      cyanLight.position.set(-5, 6, 5);
+      scene.add(cyanLight);
+
+      const orangeLight = new THREE.PointLight(0xff9e64, 18, 18, 2);
+      orangeLight.position.set(5, 4, -3);
+      scene.add(orangeLight);
+
+      const glowTexture = (() => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+        const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+        gradient.addColorStop(0, 'rgba(255,255,255,1)');
+        gradient.addColorStop(0.35, 'rgba(255,255,255,0.45)');
+        gradient.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 128, 128);
+        return new THREE.CanvasTexture(canvas);
+      })();
+
+      const addGlow = (color, size, position, opacity) => {
+        const material = new THREE.SpriteMaterial({
+          map: glowTexture,
+          color,
+          transparent: true,
+          opacity,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        });
+        const sprite = new THREE.Sprite(material);
+        sprite.scale.set(size, size, 1);
+        sprite.position.copy(position);
+        scene.add(sprite);
+        return sprite;
+      };
+
+      const addEdges = (mesh, color, opacity) => {
+        const edges = new THREE.LineSegments(
+          new THREE.EdgesGeometry(mesh.geometry),
+          new THREE.LineBasicMaterial({
+            color,
+            transparent: true,
+            opacity,
+          }),
+        );
+        mesh.add(edges);
+        return edges;
+      };
+
+      const secondaryLabels = [];
+
+      const addLabel = (parent, text, position, size = 10) => {
+        const div = document.createElement('div');
+        div.textContent = text;
+        div.style.cssText = `font-family:ui-monospace,Consolas,monospace;font-size:${size}px;letter-spacing:0.12em;color:#7dcfff;text-shadow:0 0 8px rgba(125,207,255,0.55);white-space:nowrap;pointer-events:none;`;
+        const label = new CSS2DObject(div);
+        label.position.copy(position);
+        parent.add(label);
+        return label;
+      };
+
+      // 底板
+      const board = new THREE.Mesh(
+        new THREE.BoxGeometry(9, 0.18, 6),
+        new THREE.MeshStandardMaterial({
+          color: 0x0b0f14,
+          metalness: 0.7,
+          roughness: 0.45,
+        }),
+      );
+      board.position.y = 0;
+      scene.add(board);
+      addEdges(board, 0x7dcfff, 0.12);
+
+      const grid = new THREE.GridHelper(9, 18, 0x1f2a35, 0x151b24);
+      grid.position.y = 0.12;
+      grid.material.transparent = true;
+      grid.material.opacity = 0.35;
+      scene.add(grid);
+
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(3.9, 0.012, 8, 160),
+        new THREE.MeshBasicMaterial({
+          color: 0x7dcfff,
+          transparent: true,
+          opacity: 0.28,
+        }),
+      );
+      ring.rotation.x = Math.PI / 2;
+      ring.position.y = 0.13;
+      scene.add(ring);
+
+      const goldRing = new THREE.Mesh(
+        new THREE.TorusGeometry(4.3, 0.01, 8, 160),
+        new THREE.MeshBasicMaterial({
+          color: 0xe8b96a,
+          transparent: true,
+          opacity: 0.16,
+        }),
+      );
+      goldRing.rotation.x = Math.PI / 2;
+      goldRing.position.y = 0.13;
+      scene.add(goldRing);
+
+      addGlow(0x7dcfff, 13, new THREE.Vector3(0, 2.4, -3.5), 0.06);
+      addGlow(0xff9e64, 8, new THREE.Vector3(2.8, 1.2, 1.4), 0.04);
+
+      // 星尘
+      const starGeometry = new THREE.BufferGeometry();
+      const starPositions = new Float32Array(900 * 3);
+      for (let index = 0; index < 900; index += 1) {
+        const radius = 12 + Math.random() * 18;
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(2 * Math.random() - 1);
+        starPositions[index * 3] = radius * Math.sin(phi) * Math.cos(theta);
+        starPositions[index * 3 + 1] = radius * Math.cos(phi) * 0.5 + 4;
+        starPositions[index * 3 + 2] = radius * Math.sin(phi) * Math.sin(theta);
+      }
+      starGeometry.setAttribute(
+        'position',
+        new THREE.BufferAttribute(starPositions, 3),
+      );
+      const stars = new THREE.Points(
+        starGeometry,
+        new THREE.PointsMaterial({
+          color: 0x7dcfff,
+          size: 0.035,
+          transparent: true,
+          opacity: 0.55,
+          sizeAttenuation: true,
+        }),
+      );
+      scene.add(stars);
+
+      // 外部 Flash 芯片
+      const ext = new THREE.Group();
+      ext.position.set(-2.4, 2.4, 0.4);
+      scene.add(ext);
+
+      const extBody = new THREE.Mesh(
+        new THREE.BoxGeometry(2.2, 0.35, 1.8),
+        new THREE.MeshStandardMaterial({
+          color: 0x11161e,
+          metalness: 0.6,
+          roughness: 0.35,
+        }),
+      );
+      ext.add(extBody);
+      addEdges(extBody, 0x7dcfff, 0.45);
+
+      const pinMaterial = new THREE.MeshStandardMaterial({
+        color: 0xc9a25a,
+        metalness: 0.9,
+        roughness: 0.25,
       });
 
-    const setWire = (name, on) => {
-      wires[name]?.classList.toggle('is-active', on);
-    };
+      for (let index = 0; index < 5; index += 1) {
+        const t = (index + 0.5) / 5;
+        for (const side of [-1, 1]) {
+          const pinA = new THREE.Mesh(
+            new THREE.BoxGeometry(0.08, 0.04, 0.18),
+            pinMaterial,
+          );
+          pinA.position.set(-1.1 + t * 2.2, 0.05, side * 0.99);
+          ext.add(pinA);
 
-    const setMemory = (name, on) => {
-      memoryEls[name]?.classList.toggle('is-active', on);
-    };
-
-    const resetUI = () => {
-      for (const cell of [...extCells, ...intCells]) {
-        cell.classList.remove('is-filled');
+          const pinB = new THREE.Mesh(
+            new THREE.BoxGeometry(0.18, 0.04, 0.08),
+            pinMaterial,
+          );
+          pinB.position.set(side * 1.19, 0.05, -0.9 + t * 1.8);
+          ext.add(pinB);
+        }
       }
 
-      packageEl.classList.remove('is-sending');
-
-      for (const wire of Object.values(wires)) {
-        wire.classList.remove('is-active');
+      const extCellMaterials = [];
+      for (let row = 0; row < 4; row += 1) {
+        for (let column = 0; column < 4; column += 1) {
+          const material = new THREE.MeshStandardMaterial({
+            color: 0x1a2029,
+            metalness: 0.3,
+            roughness: 0.6,
+            emissive: 0x000000,
+            emissiveIntensity: 0,
+          });
+          const cell = new THREE.Mesh(
+            new THREE.BoxGeometry(0.28, 0.03, 0.28),
+            material,
+          );
+          cell.position.set(
+            (column - 1.5) * 0.35,
+            0.185,
+            (row - 1.5) * 0.35,
+          );
+          ext.add(cell);
+          extCellMaterials.push(material);
+        }
       }
 
-      for (const memory of Object.values(memoryEls)) {
-        memory?.classList.remove('is-active');
+      addGlow(0x7dcfff, 3.4, new THREE.Vector3(-2.4, 2.4, 0.4), 0.16);
+      addLabel(ext, 'W25Q32', new THREE.Vector3(0, 0.8, 0));
+
+      // 内部 Flash / STM32
+      const int = new THREE.Group();
+      int.position.set(0.6, 0.38, -0.2);
+      scene.add(int);
+
+      const intBody = new THREE.Mesh(
+        new THREE.BoxGeometry(3, 0.45, 2.2),
+        new THREE.MeshStandardMaterial({
+          color: 0x11161e,
+          metalness: 0.65,
+          roughness: 0.3,
+        }),
+      );
+      int.add(intBody);
+      addEdges(intBody, 0xe8b96a, 0.35);
+
+      for (let index = 0; index < 6; index += 1) {
+        const t = (index + 0.5) / 6;
+        for (const side of [-1, 1]) {
+          const pinA = new THREE.Mesh(
+            new THREE.BoxGeometry(0.09, 0.04, 0.2),
+            pinMaterial,
+          );
+          pinA.position.set(-1.5 + t * 3, 0.06, side * 1.19);
+          int.add(pinA);
+
+          const pinB = new THREE.Mesh(
+            new THREE.BoxGeometry(0.2, 0.04, 0.09),
+            pinMaterial,
+          );
+          pinB.position.set(side * 1.59, 0.06, -1.1 + t * 2.2);
+          int.add(pinB);
+        }
       }
 
-      lock.classList.remove('is-open');
-      check.classList.remove('is-visible');
-      led.classList.remove('is-on');
-      extStatus.textContent = '空';
-      intStatus.textContent = '旧 APP';
-      caption.textContent = '准备中';
-      progress.style.width = '0%';
-    };
+      const intCellMaterials = [];
+      for (let row = 0; row < 2; row += 1) {
+        for (let column = 0; column < 4; column += 1) {
+          const material = new THREE.MeshStandardMaterial({
+            color: 0x1a2029,
+            metalness: 0.3,
+            roughness: 0.6,
+            emissive: 0x000000,
+            emissiveIntensity: 0,
+          });
+          const cell = new THREE.Mesh(
+            new THREE.BoxGeometry(0.38, 0.03, 0.42),
+            material,
+          );
+          cell.position.set(
+            (column - 1.5) * 0.62,
+            0.245,
+            (row - 0.5) * 0.62,
+          );
+          int.add(cell);
+          intCellMaterials.push(material);
+        }
+      }
 
-    const play = async () => {
-      const id = ++token;
-      resetUI();
+      addGlow(0xe8b96a, 3.8, new THREE.Vector3(0.6, 0.8, -0.2), 0.12);
+      addLabel(int, 'STM32 · APP', new THREE.Vector3(0, 0.9, 0));
 
-      try {
-        caption.textContent = '串口写入外部 Flash';
-        packageEl.classList.add('is-sending');
-        setMemory('ext', true);
-        setWire('send', true);
+      // Bootloader 小芯片
+      const boot = new THREE.Group();
+      boot.position.set(-2.1, 0.25, -1.9);
+      scene.add(boot);
 
-        for (let index = 0; index < extCells.length; index += 1) {
-          await sleep(110, id);
-          extCells[index].classList.add('is-filled');
-          extStatus.textContent = `写入 ${index + 1}/${extCells.length}`;
-          progress.style.width = `${((index + 1) / extCells.length) * 35}%`;
+      const bootBody = new THREE.Mesh(
+        new THREE.BoxGeometry(1.3, 0.25, 1),
+        new THREE.MeshStandardMaterial({
+          color: 0x0f141b,
+          metalness: 0.55,
+          roughness: 0.45,
+        }),
+      );
+      boot.add(bootBody);
+      addEdges(bootBody, 0xe8b96a, 0.3);
+
+      // APP LED
+      const app = new THREE.Group();
+      app.position.set(3.4, 0.35, 1.2);
+      scene.add(app);
+
+      const appBase = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.24, 0.28, 0.16, 24),
+        new THREE.MeshStandardMaterial({
+          color: 0x11161e,
+          metalness: 0.7,
+          roughness: 0.35,
+        }),
+      );
+      app.add(appBase);
+      addEdges(appBase, 0x7dcfff, 0.3);
+
+      const ledMaterial = new THREE.MeshStandardMaterial({
+        color: 0x1a2029,
+        emissive: 0x9ece6a,
+        emissiveIntensity: 0,
+        metalness: 0.2,
+        roughness: 0.3,
+      });
+      const led = new THREE.Mesh(
+        new THREE.SphereGeometry(0.13, 20, 20),
+        ledMaterial,
+      );
+      led.position.y = 0.16;
+      app.add(led);
+
+      const ledLight = new THREE.PointLight(0x9ece6a, 0, 5, 2);
+      ledLight.position.y = 0.16;
+      app.add(ledLight);
+
+      addGlow(0x9ece6a, 1.6, new THREE.Vector3(3.4, 0.55, 1.2), 0.08);
+
+      // 上位机
+      const source = new THREE.Group();
+      source.position.set(-4.6, 4.2, 1.6);
+      scene.add(source);
+
+      const sourceCore = new THREE.Mesh(
+        new THREE.IcosahedronGeometry(0.18, 0),
+        new THREE.MeshBasicMaterial({ color: 0xe8b96a }),
+      );
+      source.add(sourceCore);
+
+      const sourceRing = new THREE.Mesh(
+        new THREE.TorusGeometry(0.45, 0.012, 8, 64),
+        new THREE.MeshBasicMaterial({
+          color: 0x7dcfff,
+          transparent: true,
+          opacity: 0.65,
+        }),
+      );
+      sourceRing.rotation.x = 1.1;
+      source.add(sourceRing);
+
+      const sourceRing2 = new THREE.Mesh(
+        new THREE.TorusGeometry(0.62, 0.008, 8, 64),
+        new THREE.MeshBasicMaterial({
+          color: 0xe8b96a,
+          transparent: true,
+          opacity: 0.35,
+        }),
+      );
+      sourceRing2.rotation.y = 1.2;
+      source.add(sourceRing2);
+
+      if (!isNarrow) {
+        const sourceLabel = addLabel(
+          source,
+          '上位机 · YMODEM',
+          new THREE.Vector3(0, 0.8, 0),
+          9,
+        );
+        secondaryLabels.push(sourceLabel.element);
+      }
+
+      // AES 解密核心
+      const core = new THREE.Group();
+      core.position.set(-0.8, 3.4, 1.2);
+      scene.add(core);
+
+      const coreMaterial = new THREE.MeshStandardMaterial({
+        color: 0x0b131a,
+        emissive: 0x7dcfff,
+        emissiveIntensity: 0.25,
+        metalness: 0.7,
+        roughness: 0.25,
+      });
+      const coreMesh = new THREE.Mesh(
+        new THREE.IcosahedronGeometry(0.38, 0),
+        coreMaterial,
+      );
+      core.add(coreMesh);
+
+      const coreWire = new THREE.Mesh(
+        new THREE.IcosahedronGeometry(0.44, 0),
+        new THREE.MeshBasicMaterial({
+          color: 0x7dcfff,
+          wireframe: true,
+          transparent: true,
+          opacity: 0.45,
+        }),
+      );
+      core.add(coreWire);
+
+      const coreRing = new THREE.Mesh(
+        new THREE.TorusGeometry(0.6, 0.012, 8, 72),
+        new THREE.MeshBasicMaterial({
+          color: 0x7dcfff,
+          transparent: true,
+          opacity: 0.4,
+        }),
+      );
+      coreRing.rotation.x = 1.1;
+      core.add(coreRing);
+
+      const coreRing2 = new THREE.Mesh(
+        new THREE.TorusGeometry(0.76, 0.008, 8, 72),
+        new THREE.MeshBasicMaterial({
+          color: 0xe8b96a,
+          transparent: true,
+          opacity: 0.3,
+        }),
+      );
+      coreRing2.rotation.y = 1.2;
+      core.add(coreRing2);
+
+      if (!isNarrow) {
+        const coreLabel = addLabel(
+          core,
+          'AES-256-CBC',
+          new THREE.Vector3(0, 1, 0),
+          9,
+        );
+        secondaryLabels.push(coreLabel.element);
+      }
+
+      addGlow(0x7dcfff, 2.4, new THREE.Vector3(-0.8, 3.4, 1.2), 0.1);
+
+      // 传输路径
+      const makeCurve = (points) =>
+        new THREE.CatmullRomCurve3(
+          points.map(([x, y, z]) => new THREE.Vector3(x, y, z)),
+        );
+
+      const curve1 = makeCurve([
+        [-4.6, 4.2, 1.6],
+        [-3.7, 3.7, 1.2],
+        [-3.1, 3.2, 0.8],
+        [-2.4, 2.9, 0.4],
+      ]);
+
+      const curve2 = makeCurve([
+        [-2.4, 2.2, 0.4],
+        [-1.8, 2.9, 0.8],
+        [-0.8, 3.4, 1.2],
+        [-0.2, 2.4, 0.5],
+        [0.2, 1.4, 0.1],
+        [0.6, 0.95, -0.2],
+      ]);
+
+      const curve3 = makeCurve([
+        [0.6, 0.95, -0.2],
+        [1.6, 0.8, 0.3],
+        [2.6, 0.7, 0.8],
+        [3.4, 0.65, 1.2],
+      ]);
+
+      const addPath = (curve, color, opacity) => {
+        const tube = new THREE.Mesh(
+          new THREE.TubeGeometry(curve, 80, 0.012, 6, false),
+          new THREE.MeshBasicMaterial({
+            color,
+            transparent: true,
+            opacity,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+          }),
+        );
+        scene.add(tube);
+      };
+
+      addPath(curve1, 0x7dcfff, 0.26);
+      addPath(curve2, 0x7dcfff, 0.22);
+      addPath(curve3, 0xe8b96a, 0.22);
+
+      const packetGeometry = new THREE.OctahedronGeometry(0.09, 0);
+      const packetGroups = [];
+
+      [curve1, curve2, curve3].forEach((curve, curveIndex) => {
+        const group = new THREE.Group();
+        group.visible = false;
+        scene.add(group);
+
+        const color = curveIndex === 2 ? 0xe8b96a : 0xffb46a;
+        const packets = [];
+
+        for (let index = 0; index < 5; index += 1) {
+          const mesh = new THREE.Mesh(
+            packetGeometry,
+            new THREE.MeshBasicMaterial({ color }),
+          );
+
+          const halo = new THREE.Sprite(
+            new THREE.SpriteMaterial({
+              map: glowTexture,
+              color,
+              transparent: true,
+              opacity: 0.65,
+              blending: THREE.AdditiveBlending,
+              depthWrite: false,
+            }),
+          );
+          halo.scale.set(0.32, 0.32, 1);
+          mesh.add(halo);
+
+          group.add(mesh);
+          packets.push({
+            mesh,
+            offset: index / 5,
+            speed: 0.05 + curveIndex * 0.008,
+          });
         }
 
-        packageEl.classList.remove('is-sending');
-        setWire('send', false);
+        packetGroups.push({ group, packets, curve });
+      });
 
-        caption.textContent = '读取并解密 · AES-256-CBC';
-        lock.classList.add('is-open');
-        setWire('decrypt', true);
-        await sleep(1500, id);
-        setWire('decrypt', false);
-        setMemory('ext', false);
+      // 时间线
+      let token = 0;
+      let phase = 'idle';
 
-        caption.textContent = '写入内部 Flash · APP 区';
-        setMemory('int', true);
-        setWire('decrypt', true);
+      const setPhase = (name) => {
+        phase = name;
+        packetGroups[0].group.visible =
+          name === 'receive' || name === 'write';
+        packetGroups[1].group.visible =
+          name === 'decrypt' || name === 'install';
+        packetGroups[2].group.visible =
+          name === 'jump' || name === 'run';
+        root.dataset.phase = name;
+      };
 
-        for (let index = 0; index < intCells.length; index += 1) {
-          await sleep(160, id);
-          intCells[index].classList.add('is-filled');
-          intStatus.textContent = `写入 ${index + 1}/${intCells.length}`;
-          progress.style.width = `${55 + ((index + 1) / intCells.length) * 30}%`;
+      const setStatus = (status, caption, progress) => {
+        statusEl.textContent = status;
+        captionEl.textContent = caption;
+        progressEl.style.width = `${progress}%`;
+      };
+
+      const setCell = (material) => {
+        material.color.set(0xe8b96a);
+        material.emissive.set(0xe8b96a);
+        material.emissiveIntensity = 0.9;
+      };
+
+      const resetScene = () => {
+        setPhase('idle');
+        for (const material of extCellMaterials) {
+          material.color.set(0x1a2029);
+          material.emissive.set(0x000000);
+          material.emissiveIntensity = 0;
         }
+        for (const material of intCellMaterials) {
+          material.color.set(0x1a2029);
+          material.emissive.set(0x000000);
+          material.emissiveIntensity = 0;
+        }
+        ledMaterial.emissiveIntensity = 0;
+        ledLight.intensity = 0;
+        statusEl.textContent = '待机';
+        captionEl.textContent = '等待固件...';
+        progressEl.style.width = '0%';
+      };
 
-        setWire('decrypt', false);
+      const sleep = (ms, id) =>
+        new Promise((resolve, reject) => {
+          setTimeout(() => {
+            if (id === token) resolve();
+            else reject(new Error('cancelled'));
+          }, ms);
+        });
 
-        caption.textContent = '校验向量表 · 跳转 APP';
-        setWire('jump', true);
-        await sleep(700, id);
-        setWire('jump', false);
-        check.classList.add('is-visible');
-        intStatus.textContent = '校验通过';
-        setMemory('app', true);
-        led.classList.add('is-on');
-        progress.style.width = '92%';
+      const play = async () => {
+        const id = ++token;
+        resetScene();
 
-        caption.textContent = 'APP 运行 · LED 闪烁';
-        await sleep(2200, id);
-        progress.style.width = '100%';
-        await sleep(1600, id);
+        try {
+          setPhase('receive');
+          setStatus('接收固件', 'YMODEM 分包接收', 8);
+          await sleep(1400, id);
+
+          setPhase('write');
+          setStatus('写入外部 Flash', 'SPI1 → W25Q32 · 4 KB 扇区', 15);
+
+          for (let index = 0; index < extCellMaterials.length; index += 1) {
+            await sleep(90, id);
+            setCell(extCellMaterials[index]);
+            const percent =
+              15 + ((index + 1) / extCellMaterials.length) * 25;
+            progressEl.style.width = `${percent}%`;
+          }
+
+          setPhase('decrypt');
+          setStatus('AES-256-CBC 解密', '读取加密包 · 不重置 IV', 48);
+          await sleep(1500, id);
+
+          setPhase('install');
+          setStatus('写入内部 APP', '0x08008000 · 半字写入', 55);
+
+          for (let index = 0; index < intCellMaterials.length; index += 1) {
+            await sleep(150, id);
+            setCell(intCellMaterials[index]);
+            const percent =
+              55 + ((index + 1) / intCellMaterials.length) * 30;
+            progressEl.style.width = `${percent}%`;
+          }
+
+          setPhase('jump');
+          setStatus('校验并跳转', 'VTOR / MSP / APP', 90);
+          await sleep(900, id);
+
+          setPhase('run');
+          setStatus('APP 运行', 'LED2 / LED3 交替', 100);
+          await sleep(2400, id);
+
+          await sleep(1600, id);
+          play();
+        } catch {
+          // 重播时取消上一轮
+        }
+      };
+
+      replayBtn.addEventListener('click', () => {
         play();
-      } catch {
-        // 重播时取消上一轮
-      }
-    };
+      });
 
-    replayBtn.addEventListener('click', () => {
+      // 渲染循环
+      const clock = new THREE.Clock();
+      let elapsed = 0;
+
+      let lastNarrow = null;
+
+      const resize = () => {
+        const width = canvasHost.clientWidth;
+        const height = canvasHost.clientHeight;
+        if (width === 0 || height === 0) return;
+
+        const narrow = width < 520;
+
+        if (narrow !== lastNarrow) {
+          lastNarrow = narrow;
+          camera.fov = narrow ? 48 : 38;
+          camera.position.set(
+            0,
+            narrow ? 8 : 6.2,
+            narrow ? 16.5 : 14.5,
+          );
+          controls.target.set(0, narrow ? 2 : 1.5, 0);
+          controls.update();
+
+          for (const element of secondaryLabels) {
+            element.style.display = narrow ? 'none' : '';
+          }
+        }
+
+        renderer.setSize(width, height, false);
+        labelRenderer.setSize(width, height);
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+      };
+
+      const observer = new ResizeObserver(resize);
+      observer.observe(canvasHost);
+      resize();
+
+      const animate = () => {
+        const delta = Math.min(clock.getDelta(), 0.05);
+        elapsed += delta;
+
+        controls.update();
+
+        source.rotation.y += delta * 0.5;
+        sourceRing.rotation.z += delta * 0.8;
+        sourceRing2.rotation.x += delta * 0.4;
+
+        core.rotation.y += delta * (phase === 'decrypt' ? 2.8 : 0.35);
+        core.rotation.x += delta * 0.12;
+        coreRing.rotation.z += delta * (phase === 'decrypt' ? 2 : 0.3);
+        coreRing2.rotation.x += delta * 0.5;
+        coreMaterial.emissiveIntensity =
+          phase === 'decrypt'
+            ? 1.1 + Math.sin(elapsed * 8) * 0.4
+            : 0.22;
+        coreWire.material.opacity = phase === 'decrypt' ? 0.85 : 0.35;
+
+        ring.rotation.z += delta * 0.04;
+        goldRing.rotation.z -= delta * 0.03;
+        stars.rotation.y += delta * 0.004;
+
+        for (const set of packetGroups) {
+          if (!set.group.visible) continue;
+
+          for (const packet of set.packets) {
+            const t = (elapsed * packet.speed + packet.offset) % 1;
+            packet.mesh.position.copy(set.curve.getPointAt(t));
+            packet.mesh.rotation.x += delta * 1.8;
+            packet.mesh.rotation.y += delta * 1.2;
+          }
+        }
+
+        ledMaterial.emissiveIntensity =
+          phase === 'run'
+            ? 1.2 + Math.sin(elapsed * 6) * 0.9
+            : 0;
+        ledLight.intensity =
+          phase === 'run'
+            ? 1.4 + Math.sin(elapsed * 6) * 1.1
+            : 0;
+
+        renderer.render(scene, camera);
+        labelRenderer.render(scene, camera);
+      };
+
+      renderer.setAnimationLoop(animate);
       play();
-    });
-
-    play();
+    }
   }
 </script>
 
 <style>
-  .ota-anim {
+  .ota-3d {
+    position: relative;
+    height: 560px;
     margin-top: 1.75rem;
-    padding: 1.25rem;
+    overflow: hidden;
     border: 1px solid var(--line);
     border-radius: 14px;
-    background: linear-gradient(180deg, #11141b 0%, #0d1016 100%);
+    background:
+      radial-gradient(circle at 50% 42%, #10161f 0%, #07090d 62%, #05070a 100%);
   }
 
-  .ota-anim-head {
+  .ota-3d-canvas {
+    position: absolute;
+    inset: 0;
+  }
+
+  .ota-3d-canvas canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .ota-3d-ui {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1rem;
+    pointer-events: none;
+  }
+
+  .ota-3d-top,
+  .ota-3d-bottom {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
+    gap: 0.75rem;
   }
 
-  .ota-anim-kicker {
+  .ota-3d-bottom {
+    align-items: flex-end;
+  }
+
+  .ota-3d-panel {
+    padding: 0.55rem 0.7rem;
+    border: 1px solid rgba(125, 207, 255, 0.14);
+    border-radius: 8px;
+    background: rgba(8, 11, 16, 0.55);
+    backdrop-filter: blur(6px);
+  }
+
+  .ota-3d-kicker {
     font-family: var(--mono);
-    font-size: 0.62rem;
+    font-size: 0.58rem;
     letter-spacing: 0.14em;
-    color: var(--gold);
+    color: #7dcfff;
   }
 
-  .ota-anim-caption {
-    margin-top: 0.3rem;
-    font-size: 0.9rem;
+  .ota-3d-status {
+    margin-top: 0.25rem;
+    font-size: 0.82rem;
     color: var(--text);
   }
 
-  .ota-anim-btn {
-    padding: 0.4rem 0.75rem;
-    border: 1px solid rgba(232, 185, 106, 0.45);
+  .ota-3d-specs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    align-items: flex-end;
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    letter-spacing: 0.04em;
+    color: var(--faint);
+  }
+
+  .ota-3d-specs b {
+    margin-left: 0.3rem;
+    font-weight: 400;
+    color: #7dcfff;
+  }
+
+  .ota-3d-caption-panel {
+    min-width: 15rem;
+    max-width: 24rem;
+  }
+
+  .ota-3d-caption {
+    font-size: 0.72rem;
+    line-height: 1.5;
+    color: var(--dim);
+  }
+
+  .ota-3d-progress {
+    height: 2px;
+    margin-top: 0.55rem;
+    overflow: hidden;
+    border-radius: 1px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .ota-3d-progress span {
+    display: block;
+    width: 0;
+    height: 100%;
+    background: linear-gradient(90deg, #7dcfff, #e8b96a);
+    transition: width 0.25s linear;
+  }
+
+  .ota-3d-btn {
+    padding: 0.45rem 0.8rem;
+    border: 1px solid rgba(232, 185, 106, 0.5);
     border-radius: 7px;
-    background: rgba(232, 185, 106, 0.05);
+    background: rgba(8, 11, 16, 0.7);
     color: var(--gold);
     font-family: var(--sans);
     font-size: 0.72rem;
     cursor: pointer;
+    pointer-events: auto;
   }
 
-  .ota-anim-btn:hover {
+  .ota-3d-btn:hover {
     background: rgba(232, 185, 106, 0.12);
   }
 
-  .ota-anim-stage {
-    max-width: 37rem;
-    margin: 1.25rem auto 0;
-  }
-
-  .ota-source {
-    display: flex;
+  .ota-3d-fallback {
+    display: none;
+    position: absolute;
+    inset: 0;
+    z-index: 3;
     align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0.8rem 1rem;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    background: #11141b;
-    flex-wrap: wrap;
+    justify-content: center;
+    padding: 1.5rem;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--dim);
   }
 
-  .ota-chip-name {
-    display: block;
-    font-size: 0.88rem;
-    font-weight: 600;
-    color: var(--text);
+  .ota-3d.is-failed .ota-3d-canvas {
+    display: none;
   }
 
-  .ota-chip-meta {
-    display: block;
-    margin-top: 0.15rem;
-    font-family: var(--mono);
-    font-size: 0.62rem;
-    color: var(--faint);
+  .ota-3d.is-failed .ota-3d-ui {
+    display: none;
   }
 
-  .ota-package {
-    display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    gap: 3px;
-    width: 160px;
-  }
-
-  .ota-package span {
-    height: 14px;
-    border-radius: 2px;
-    background: #1d222d;
-  }
-
-  .ota-package.is-sending span {
-    animation: package-pulse 0.9s ease-in-out infinite;
-  }
-
-  .ota-package span:nth-child(2) { animation-delay: 0.06s; }
-  .ota-package span:nth-child(3) { animation-delay: 0.12s; }
-  .ota-package span:nth-child(4) { animation-delay: 0.18s; }
-  .ota-package span:nth-child(5) { animation-delay: 0.24s; }
-  .ota-package span:nth-child(6) { animation-delay: 0.3s; }
-  .ota-package span:nth-child(7) { animation-delay: 0.36s; }
-  .ota-package span:nth-child(8) { animation-delay: 0.42s; }
-
-  .ota-wire {
-    position: relative;
-    height: 48px;
-    margin-left: 26px;
-    border-left: 1px dashed #2a2f3b;
-  }
-
-  .ota-wire.is-active {
-    border-left-color: rgba(232, 185, 106, 0.45);
-  }
-
-  .ota-wire-label {
-    position: absolute;
-    top: 50%;
-    left: 16px;
-    transform: translateY(-50%);
-    font-size: 0.62rem;
-    color: var(--faint);
-  }
-
-  .ota-wire-aes .ota-wire-label {
-    left: 26px;
-  }
-
-  .ota-byte {
-    position: absolute;
-    top: -4px;
-    left: -4px;
-    width: 7px;
-    height: 7px;
-    border-radius: 1px;
-    background: var(--gold);
-    opacity: 0;
-  }
-
-  .ota-wire.is-active .ota-byte {
-    opacity: 1;
-    animation: wire-fall 0.9s linear infinite;
-  }
-
-  .ota-wire .ota-byte:nth-of-type(2) {
-    animation-delay: 0.3s;
-  }
-
-  .ota-wire .ota-byte:nth-of-type(3) {
-    animation-delay: 0.6s;
-  }
-
-  .ota-lock {
-    position: absolute;
-    top: 50%;
-    left: -15px;
-    width: 28px;
-    height: 24px;
-    margin-top: -12px;
-    border: 2px solid var(--gold-dim);
-    border-radius: 5px;
-    background: var(--bg);
-    transition: border-color 0.3s ease;
-  }
-
-  .ota-lock::before {
-    content: "";
-    position: absolute;
-    top: -11px;
-    left: 5px;
-    width: 14px;
-    height: 11px;
-    border: 2px solid var(--gold-dim);
-    border-bottom: 0;
-    border-radius: 8px 8px 0 0;
-    transform-origin: bottom left;
-    transition:
-      transform 0.35s ease,
-      border-color 0.3s ease;
-  }
-
-  .ota-lock::after {
-    content: "";
-    position: absolute;
-    top: 9px;
-    left: 11px;
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background: var(--gold-dim);
-  }
-
-  .ota-lock.is-open {
-    border-color: var(--gold);
-  }
-
-  .ota-lock.is-open::before {
-    border-color: var(--gold);
-    transform: rotate(-38deg) translateX(1px);
-  }
-
-  .ota-memory {
-    padding: 0.8rem 1rem;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    background: #11141b;
-    transition:
-      border-color 0.3s ease,
-      box-shadow 0.3s ease;
-  }
-
-  .ota-memory.is-active {
-    border-color: rgba(232, 185, 106, 0.6);
-    box-shadow: 0 0 30px -16px rgba(232, 185, 106, 0.9);
-  }
-
-  .ota-memory-head {
+  .ota-3d.is-failed .ota-3d-fallback {
     display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 0.5rem;
-    flex-wrap: wrap;
   }
 
-  .ota-memory-name {
-    font-size: 0.86rem;
-    font-weight: 600;
-    color: var(--text);
-  }
-
-  .ota-memory-meta {
-    font-family: var(--mono);
-    font-size: 0.6rem;
-    color: var(--faint);
-  }
-
-  .ota-cells {
-    display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    gap: 4px;
-    margin-top: 0.6rem;
-  }
-
-  .ota-cells-int {
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  .ota-cell {
-    height: 12px;
-    border-radius: 2px;
-    background: #1d222d;
-    transition:
-      background 0.25s ease,
-      box-shadow 0.25s ease;
-  }
-
-  .ota-cell.is-filled {
-    background: linear-gradient(180deg, #f0c87e, #c8953f);
-    box-shadow: 0 0 8px rgba(232, 185, 106, 0.45);
-    animation: cell-pop 0.2s ease-out;
-  }
-
-  .ota-memory-foot {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 0.5rem;
-    margin-top: 0.55rem;
-    font-family: var(--mono);
-    font-size: 0.6rem;
-    color: var(--faint);
-  }
-
-  .ota-app {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0.8rem 1rem;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    background: #11141b;
-    transition:
-      border-color 0.3s ease,
-      box-shadow 0.3s ease;
-  }
-
-  .ota-app.is-active {
-    border-color: rgba(232, 185, 106, 0.65);
-    box-shadow: 0 0 30px -14px rgba(232, 185, 106, 0.8);
-  }
-
-  .ota-app-name {
-    display: block;
-    font-size: 0.88rem;
-    font-weight: 600;
-    color: var(--text);
-  }
-
-  .ota-app-meta {
-    display: block;
-    margin-top: 0.15rem;
-    font-family: var(--mono);
-    font-size: 0.6rem;
-    color: var(--faint);
-  }
-
-  .ota-app-signals {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-  }
-
-  .ota-check {
-    color: var(--gold);
-    font-size: 1.1rem;
-    opacity: 0;
-    transform: scale(0.7);
-    transition:
-      opacity 0.3s ease,
-      transform 0.3s ease;
-  }
-
-  .ota-check.is-visible {
-    opacity: 1;
-    transform: scale(1);
-  }
-
-  .ota-led {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: #2a2f3b;
-  }
-
-  .ota-led.is-on {
-    background: #9ece6a;
-    box-shadow: 0 0 12px #9ece6a;
-    animation: led-blink 0.9s steps(2, start) infinite;
-  }
-
-  .ota-anim-foot {
-    max-width: 37rem;
-    margin: 1rem auto 0;
-  }
-
-  .ota-anim-note {
-    font-size: 0.64rem;
-    line-height: 1.6;
-    color: var(--faint);
-  }
-
-  .ota-anim-progress {
-    height: 2px;
-    margin-top: 0.6rem;
-    overflow: hidden;
-    border-radius: 1px;
-    background: var(--line);
-  }
-
-  .ota-anim-progress span {
-    display: block;
-    width: 0;
-    height: 100%;
-    background: var(--gold);
-    transition: width 0.2s linear;
-  }
-
-  @keyframes package-pulse {
-    0%,
-    100% {
-      background: #1d222d;
-    }
-    50% {
-      background: var(--gold);
-      box-shadow: 0 0 8px rgba(232, 185, 106, 0.5);
-    }
-  }
-
-  @keyframes wire-fall {
-    0% {
-      top: -4px;
-      opacity: 0;
-    }
-    12% {
-      opacity: 1;
-    }
-    88% {
-      opacity: 1;
-    }
-    100% {
-      top: calc(100% - 4px);
-      opacity: 0;
-    }
-  }
-
-  @keyframes cell-pop {
-    from {
-      transform: scale(0.85);
-    }
-    to {
-      transform: scale(1);
-    }
-  }
-
-  @keyframes led-blink {
-    0%,
-    49% {
-      opacity: 1;
-    }
-    50%,
-    100% {
-      opacity: 0.45;
-    }
-  }
-
-  @media (max-width: 560px) {
-    .ota-source {
-      align-items: flex-start;
-      flex-direction: column;
+  @media (max-width: 640px) {
+    .ota-3d {
+      height: 440px;
     }
 
-    .ota-package {
-      width: 100%;
+    .ota-3d-ui {
+      padding: 0.7rem;
     }
 
-    .ota-wire {
-      height: 40px;
+    .ota-3d-specs {
+      display: none;
     }
 
-    .ota-cell {
-      height: 10px;
+    .ota-3d-caption-panel {
+      min-width: 0;
+      max-width: none;
+    }
+
+    .ota-3d-caption {
+      font-size: 0.66rem;
     }
   }
 </style>
