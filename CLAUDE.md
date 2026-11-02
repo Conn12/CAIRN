@@ -24,7 +24,8 @@ D:\CAIRN\
 │
 ├── content\                   内容部门：所有文字
 │   ├── posts\                 正式文章
-│   └── drafts\                草稿
+│   ├── drafts\                草稿
+│   └── learning\              学习项目（项目总结）
 │
 ├── assets\                    资源部门：所有非文字资源
 │   ├── images\                图片
@@ -89,6 +90,7 @@ D:\CAIRN\
 |---|---|---|
 | 文章 | `content\posts\` | `YYYY-MM-DD-slug.md` |
 | 草稿 | `content\drafts\` | `slug.md` |
+| 学习项目 | `content\learning\` | `<slug>.md` |
 | 文章配图 | `assets\images\<slug>\` | `01.png`、`02.png` |
 | 3D 模型 | `assets\models\` | `<name>.glb` |
 | 附件 | `assets\files\` | `<slug>-<description>.pdf` |

@@ -1,398 +1,243 @@
-<div class="ota-demo" data-ota>
-  <div class="ota-head">
-    <div class="ota-head-text">
-      <span class="ota-kicker">最终流程演示</span>
-      <p class="ota-step-title" data-ota-title>待开始</p>
+<div class="ota-anim" data-ota-anim>
+  <div class="ota-anim-head">
+    <div>
+      <span class="ota-anim-kicker">外部 Flash 路径</span>
+      <p class="ota-anim-caption" data-caption>准备中</p>
     </div>
-    <div class="ota-controls">
-      <button type="button" class="ota-btn ota-btn-primary" data-ota-play>
-        播放
-      </button>
-      <button type="button" class="ota-btn" data-ota-step>单步</button>
-      <button type="button" class="ota-btn" data-ota-reset>重置</button>
+    <button type="button" class="ota-anim-btn" data-replay>重播</button>
+  </div>
+
+  <div class="ota-anim-stage">
+    <div class="ota-source">
+      <div class="ota-chip">
+        <span class="ota-chip-name">上位机</span>
+        <span class="ota-chip-meta">BIN → AES 加密包</span>
+      </div>
+      <div class="ota-package" data-package aria-hidden="true">
+        <span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span>
+      </div>
+    </div>
+
+    <div class="ota-wire" data-wire="send">
+      <span class="ota-wire-label">USART1 · YMODEM</span>
+      <i class="ota-byte"></i><i class="ota-byte"></i><i class="ota-byte"></i>
+    </div>
+
+    <div class="ota-memory" data-memory="ext">
+      <div class="ota-memory-head">
+        <span class="ota-memory-name">W25Q32 · 外部 Flash</span>
+        <span class="ota-memory-meta">4 MB · 4 KB 扇区</span>
+      </div>
+      <div class="ota-cells" data-cells="ext" aria-hidden="true">
+        <span class="ota-cell"></span><span class="ota-cell"></span>
+        <span class="ota-cell"></span><span class="ota-cell"></span>
+        <span class="ota-cell"></span><span class="ota-cell"></span>
+        <span class="ota-cell"></span><span class="ota-cell"></span>
+        <span class="ota-cell"></span><span class="ota-cell"></span>
+        <span class="ota-cell"></span><span class="ota-cell"></span>
+        <span class="ota-cell"></span><span class="ota-cell"></span>
+        <span class="ota-cell"></span><span class="ota-cell"></span>
+      </div>
+      <div class="ota-memory-foot">
+        <span data-ext-status>空</span>
+        <span>暂存加密包</span>
+      </div>
+    </div>
+
+    <div class="ota-wire ota-wire-aes" data-wire="decrypt">
+      <span class="ota-lock" data-lock aria-hidden="true"><i></i></span>
+      <span class="ota-wire-label">读取 · AES-256-CBC 解密</span>
+      <i class="ota-byte"></i><i class="ota-byte"></i><i class="ota-byte"></i>
+    </div>
+
+    <div class="ota-memory" data-memory="int">
+      <div class="ota-memory-head">
+        <span class="ota-memory-name">内部 Flash · APP 区</span>
+        <span class="ota-memory-meta">0x08008000 · 96 KB</span>
+      </div>
+      <div class="ota-cells ota-cells-int" data-cells="int" aria-hidden="true">
+        <span class="ota-cell"></span><span class="ota-cell"></span>
+        <span class="ota-cell"></span><span class="ota-cell"></span>
+        <span class="ota-cell"></span><span class="ota-cell"></span>
+        <span class="ota-cell"></span><span class="ota-cell"></span>
+      </div>
+      <div class="ota-memory-foot">
+        <span data-int-status>旧 APP</span>
+        <span>解密后的固件</span>
+      </div>
+    </div>
+
+    <div class="ota-wire" data-wire="jump">
+      <span class="ota-wire-label">校验向量表 · 设置 VTOR / MSP</span>
+      <i class="ota-byte"></i><i class="ota-byte"></i>
+    </div>
+
+    <div class="ota-app" data-app>
+      <div>
+        <span class="ota-app-name">APP 运行</span>
+        <span class="ota-app-meta">_LED1 · LED2 / LED3</span>
+      </div>
+      <div class="ota-app-signals">
+        <span class="ota-check" data-check>✓</span>
+        <i class="ota-led" data-led></i>
+      </div>
     </div>
   </div>
 
-  <div class="ota-progress" aria-hidden="true">
-    <span data-ota-progress></span>
-  </div>
-
-  <div class="ota-flow">
-    <div class="ota-node" data-node="pc">
-      <div class="ota-node-head">
-        <span class="ota-node-name">上位机</span>
-        <span class="ota-node-tag">Tera Term</span>
-      </div>
-      <p class="ota-node-meta">加密包 · YMODEM</p>
-      <span class="ota-node-status" data-status>等待</span>
-    </div>
-
-    <div class="ota-link" data-link="pc-boot">
-      <span class="ota-link-label">USART1 · YMODEM</span>
-      <i class="ota-packet"></i>
-    </div>
-
-    <div class="ota-node" data-node="boot">
-      <div class="ota-node-head">
-        <span class="ota-node-name">Bootloader</span>
-        <span class="ota-node-tag">0x08000000 · 32 KB</span>
-      </div>
-      <p class="ota-node-meta">USART1 + SPI1 · 接收 / 解密 / 跳转</p>
-      <span class="ota-node-status" data-status>等待</span>
-    </div>
-
-    <div class="ota-link" data-link="boot-ext">
-      <span class="ota-link-label">SPI1 · 写入 / 读回</span>
-      <i class="ota-packet"></i>
-    </div>
-
-    <div class="ota-node" data-node="ext">
-      <div class="ota-node-head">
-        <span class="ota-node-name">W25Q32 外部 Flash</span>
-        <span class="ota-node-tag">4 MB</span>
-      </div>
-      <p class="ota-node-meta">暂存加密包 · 4 KB 扇区 / 256 B 页</p>
-      <div class="ota-meter" aria-hidden="true">
-        <span data-fill="ext"></span>
-      </div>
-      <span class="ota-node-status" data-status>等待</span>
-    </div>
-
-    <div class="ota-link" data-link="ext-int">
-      <span class="ota-link-label">Bootloader 读取 · AES 解密 · 搬运</span>
-      <i class="ota-packet"></i>
-    </div>
-
-    <div class="ota-node" data-node="int">
-      <div class="ota-node-head">
-        <span class="ota-node-name">内部 Flash APP 区</span>
-        <span class="ota-node-tag">0x08008000 · 96 KB</span>
-      </div>
-      <p class="ota-node-meta">2 KB 页 / 半字写入 / 读回比对</p>
-      <div class="ota-meter" aria-hidden="true">
-        <span data-fill="int"></span>
-      </div>
-      <span class="ota-node-status" data-status>等待</span>
-    </div>
-
-    <div class="ota-link" data-link="int-app">
-      <span class="ota-link-label">校验向量表 · 设置 VTOR / MSP</span>
-      <i class="ota-packet"></i>
-    </div>
-
-    <div class="ota-node" data-node="app">
-      <div class="ota-node-head">
-        <span class="ota-node-name">APP 运行</span>
-        <span class="ota-node-tag">_LED1</span>
-      </div>
-      <p class="ota-node-meta">LED2 / LED3 每 500 ms 交替</p>
-      <span class="ota-node-status" data-status>等待</span>
+  <div class="ota-anim-foot">
+    <p class="ota-anim-note">
+      按最终路径简化；当前代码尚未校验 YMODEM CRC。
+    </p>
+    <div class="ota-anim-progress" aria-hidden="true">
+      <span data-progress></span>
     </div>
   </div>
-
-  <div class="ota-log-wrap">
-    <p class="ota-log-title">执行日志</p>
-    <ol class="ota-log" data-ota-log aria-live="polite"></ol>
-  </div>
-
-  <p class="ota-note">
-    按 <code>_07bootloader</code> 主流程简化绘制。当前代码未校验 YMODEM CRC；
-    “读回”只代表写入后读回比对，不等于整包完整性校验。
-  </p>
 </div>
 
 <script>
-  const root = document.querySelector('[data-ota]');
+  const root = document.querySelector('[data-ota-anim]');
 
   if (root) {
-    const nodes = Object.fromEntries(
-      [...root.querySelectorAll('[data-node]')].map((node) => [
-        node.dataset.node,
-        node,
-      ]),
-    );
-    const links = Object.fromEntries(
-      [...root.querySelectorAll('[data-link]')].map((link) => [
-        link.dataset.link,
-        link,
-      ]),
-    );
-
-    const titleEl = root.querySelector('[data-ota-title]');
-    const progressEl = root.querySelector('[data-ota-progress]');
-    const logEl = root.querySelector('[data-ota-log]');
-    const playBtn = root.querySelector('[data-ota-play]');
-    const stepBtn = root.querySelector('[data-ota-step]');
-    const resetBtn = root.querySelector('[data-ota-reset]');
-    const reduced = window.matchMedia(
-      '(prefers-reduced-motion: reduce)',
-    ).matches;
-
-    const steps = [
-      {
-        node: 'pc',
-        title: '生成加密包',
-        log: '编译 _LED1 得到 BIN，加密工具封装成 16 字节头 + AES 正文。',
-        status: '已生成',
-        done: '已生成',
-      },
-      {
-        node: 'pc',
-        link: 'pc-boot',
-        title: 'YMODEM 发送',
-        log: 'Tera Term 通过 USART1（115200 8N1）发送加密包。',
-        status: '发送中',
-        done: '已发送',
-      },
-      {
-        node: 'boot',
-        title: 'Bootloader 接收',
-        log: '首包解析文件名和长度，按 4 KB 擦除 W25Q32 暂存扇区。',
-        status: '接收中',
-        done: '已接收',
-      },
-      {
-        node: 'ext',
-        link: 'boot-ext',
-        title: '写入外部 Flash',
-        log: 'SPI1 按 256 字节页写入，加密包暂存到 W25Q32。',
-        status: '暂存完成',
-        done: '已暂存',
-        fill: 'ext',
-      },
-      {
-        node: 'boot',
-        link: 'boot-ext',
-        direction: 'up',
-        title: '读取并解密',
-        log: '从 W25Q32 读回头，解析原始长度，沿同一条 CBC 链 AES 解密。',
-        status: '解密中',
-        done: '已解密',
-      },
-      {
-        node: 'int',
-        link: 'ext-int',
-        title: '写入内部 Flash',
-        log: '擦除 APP 页，按半字写入 0x08008000；奇数长度末字节补 0xFF。',
-        status: '写入完成',
-        done: '已写入',
-        fill: 'int',
-      },
-      {
-        node: 'int',
-        title: '读回比对',
-        log: '逐半字读回比较，确认写入值与本次解密输出一致。',
-        status: '比对通过',
-        done: '已比对',
-      },
-      {
-        node: 'boot',
-        title: '向量表检查',
-        log: '检查初始 MSP、复位入口和 Thumb 位，设置 VTOR = 0x08008000。',
-        status: '检查通过',
-        done: '已检查',
-      },
-      {
-        node: 'app',
-        link: 'int-app',
-        title: '跳转并运行',
-        log: '关闭中断与 SysTick，设置 MSP，跳转 APP；LED 开始闪烁。',
-        status: '运行中',
-        done: '运行中',
-      },
+    const caption = root.querySelector('[data-caption]');
+    const replayBtn = root.querySelector('[data-replay]');
+    const packageEl = root.querySelector('[data-package]');
+    const extCells = [
+      ...root.querySelectorAll('[data-cells="ext"] .ota-cell'),
     ];
-
-    let index = 0;
-    let playing = false;
-    let timer = null;
-    let started = false;
-
-    const setStatus = (key, text) => {
-      const status = nodes[key]?.querySelector('[data-status]');
-      if (status) status.textContent = text;
+    const intCells = [
+      ...root.querySelectorAll('[data-cells="int"] .ota-cell'),
+    ];
+    const extStatus = root.querySelector('[data-ext-status]');
+    const intStatus = root.querySelector('[data-int-status]');
+    const progress = root.querySelector('[data-progress]');
+    const lock = root.querySelector('[data-lock]');
+    const check = root.querySelector('[data-check]');
+    const led = root.querySelector('[data-led]');
+    const wires = Object.fromEntries(
+      [...root.querySelectorAll('[data-wire]')].map((wire) => [
+        wire.dataset.wire,
+        wire,
+      ]),
+    );
+    const memoryEls = {
+      ext: root.querySelector('[data-memory="ext"]'),
+      int: root.querySelector('[data-memory="int"]'),
+      app: root.querySelector('[data-app]'),
     };
 
-    const clearLinks = () => {
-      for (const link of Object.values(links)) {
-        link.classList.remove('is-running', 'up');
-        const packet = link.querySelector('.ota-packet');
-        if (packet) packet.style.animation = 'none';
-      }
-    };
+    let token = 0;
 
-    const updateButtons = () => {
-      playBtn.textContent = playing
-        ? '暂停'
-        : index >= steps.length
-          ? '重播'
-          : '播放';
-    };
-
-    const setProgress = (value) => {
-      progressEl.style.width = `${value}%`;
-    };
-
-    const reset = () => {
-      playing = false;
-      clearTimeout(timer);
-      index = 0;
-      titleEl.textContent = '待开始';
-      setProgress(0);
-      logEl.innerHTML = '';
-
-      for (const node of Object.values(nodes)) {
-        node.classList.remove('is-active', 'is-done');
-        const status = node.querySelector('[data-status]');
-        if (status) status.textContent = '等待';
-      }
-
-      root.querySelectorAll('[data-fill]').forEach((fill) => {
-        fill.style.width = '0%';
+    const sleep = (ms, id) =>
+      new Promise((resolve, reject) => {
+        setTimeout(() => {
+          if (id === token) resolve();
+          else reject(new Error('cancelled'));
+        }, ms);
       });
 
-      clearLinks();
-      updateButtons();
+    const setWire = (name, on) => {
+      wires[name]?.classList.toggle('is-active', on);
     };
 
-    const render = (stepIndex) => {
-      const step = steps[stepIndex];
+    const setMemory = (name, on) => {
+      memoryEls[name]?.classList.toggle('is-active', on);
+    };
 
-      const previous = steps[stepIndex - 1];
+    const resetUI = () => {
+      for (const cell of [...extCells, ...intCells]) {
+        cell.classList.remove('is-filled');
+      }
 
-      for (const node of Object.values(nodes)) {
-        if (node.classList.contains('is-active')) {
-          node.classList.remove('is-active');
-          node.classList.add('is-done');
+      packageEl.classList.remove('is-sending');
+
+      for (const wire of Object.values(wires)) {
+        wire.classList.remove('is-active');
+      }
+
+      for (const memory of Object.values(memoryEls)) {
+        memory?.classList.remove('is-active');
+      }
+
+      lock.classList.remove('is-open');
+      check.classList.remove('is-visible');
+      led.classList.remove('is-on');
+      extStatus.textContent = '空';
+      intStatus.textContent = '旧 APP';
+      caption.textContent = '准备中';
+      progress.style.width = '0%';
+    };
+
+    const play = async () => {
+      const id = ++token;
+      resetUI();
+
+      try {
+        caption.textContent = '串口写入外部 Flash';
+        packageEl.classList.add('is-sending');
+        setMemory('ext', true);
+        setWire('send', true);
+
+        for (let index = 0; index < extCells.length; index += 1) {
+          await sleep(110, id);
+          extCells[index].classList.add('is-filled');
+          extStatus.textContent = `写入 ${index + 1}/${extCells.length}`;
+          progress.style.width = `${((index + 1) / extCells.length) * 35}%`;
         }
-      }
 
-      if (previous?.done) setStatus(previous.node, previous.done);
+        packageEl.classList.remove('is-sending');
+        setWire('send', false);
 
-      nodes[step.node].classList.add('is-active');
-      titleEl.textContent = `${stepIndex + 1}/${steps.length} · ${step.title}`;
-      setProgress(((stepIndex + 1) / steps.length) * 100);
+        caption.textContent = '读取并解密 · AES-256-CBC';
+        lock.classList.add('is-open');
+        setWire('decrypt', true);
+        await sleep(1500, id);
+        setWire('decrypt', false);
+        setMemory('ext', false);
 
-      if (step.status) setStatus(step.node, step.status);
+        caption.textContent = '写入内部 Flash · APP 区';
+        setMemory('int', true);
+        setWire('decrypt', true);
 
-      const item = document.createElement('li');
-      const number = document.createElement('span');
-      number.textContent = String(stepIndex + 1).padStart(2, '0');
-      item.append(number, document.createTextNode(step.log));
-      logEl.append(item);
-      logEl.scrollTop = logEl.scrollHeight;
-
-      if (step.fill) {
-        const fill = root.querySelector(`[data-fill="${step.fill}"]`);
-        if (fill) fill.style.width = '100%';
-      }
-
-      clearLinks();
-
-      if (step.link) {
-        const link = links[step.link];
-        if (link) {
-          link.classList.add('is-running');
-          if (step.direction === 'up') link.classList.add('up');
-
-          const packet = link.querySelector('.ota-packet');
-          if (packet) {
-            packet.style.animation = 'none';
-            void packet.offsetWidth;
-            packet.style.animation = '';
-          }
+        for (let index = 0; index < intCells.length; index += 1) {
+          await sleep(160, id);
+          intCells[index].classList.add('is-filled');
+          intStatus.textContent = `写入 ${index + 1}/${intCells.length}`;
+          progress.style.width = `${55 + ((index + 1) / intCells.length) * 30}%`;
         }
+
+        setWire('decrypt', false);
+
+        caption.textContent = '校验向量表 · 跳转 APP';
+        setWire('jump', true);
+        await sleep(700, id);
+        setWire('jump', false);
+        check.classList.add('is-visible');
+        intStatus.textContent = '校验通过';
+        setMemory('app', true);
+        led.classList.add('is-on');
+        progress.style.width = '92%';
+
+        caption.textContent = 'APP 运行 · LED 闪烁';
+        await sleep(2200, id);
+        progress.style.width = '100%';
+        await sleep(1600, id);
+        play();
+      } catch {
+        // 重播时取消上一轮
       }
     };
 
-    const finish = () => {
-      playing = false;
-      clearTimeout(timer);
-      titleEl.textContent = '升级完成';
-      setProgress(100);
-
-      const last = steps[steps.length - 1];
-      if (last?.done) setStatus(last.node, last.done);
-
-      for (const node of Object.values(nodes)) {
-        if (node.classList.contains('is-active')) {
-          node.classList.remove('is-active');
-          node.classList.add('is-done');
-        }
-      }
-
-      updateButtons();
-    };
-
-    const next = () => {
-      if (index >= steps.length) {
-        finish();
-        return;
-      }
-
-      const current = index;
-      index += 1;
-      render(current);
-      updateButtons();
-
-      if (playing) {
-        timer = setTimeout(next, reduced ? 500 : 1700);
-      }
-    };
-
-    playBtn.addEventListener('click', () => {
-      started = true;
-
-      if (playing) {
-        playing = false;
-        clearTimeout(timer);
-        updateButtons();
-        return;
-      }
-
-      if (index >= steps.length) reset();
-      playing = true;
-      updateButtons();
-      next();
+    replayBtn.addEventListener('click', () => {
+      play();
     });
 
-    stepBtn.addEventListener('click', () => {
-      started = true;
-      playing = false;
-      clearTimeout(timer);
-
-      if (index >= steps.length) reset();
-      const current = index;
-      index += 1;
-      render(current);
-      updateButtons();
-    });
-
-    resetBtn.addEventListener('click', () => {
-      started = true;
-      reset();
-    });
-
-    reset();
-
-    if (!reduced) {
-      const observer = new IntersectionObserver(
-        (entries) => {
-          if (!started && entries.some((entry) => entry.isIntersecting)) {
-            started = true;
-            observer.disconnect();
-            playBtn.click();
-          }
-        },
-        { threshold: 0.35 },
-      );
-
-      observer.observe(root);
-    }
+    play();
   }
 </script>
 
 <style>
-  .ota-demo {
+  .ota-anim {
     margin-top: 1.75rem;
     padding: 1.25rem;
     border: 1px solid var(--line);
@@ -400,7 +245,7 @@
     background: linear-gradient(180deg, #11141b 0%, #0d1016 100%);
   }
 
-  .ota-head {
+  .ota-anim-head {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -408,263 +253,419 @@
     flex-wrap: wrap;
   }
 
-  .ota-kicker {
+  .ota-anim-kicker {
     font-family: var(--mono);
     font-size: 0.62rem;
     letter-spacing: 0.14em;
     color: var(--gold);
   }
 
-  .ota-step-title {
+  .ota-anim-caption {
     margin-top: 0.3rem;
-    font-size: 0.92rem;
+    font-size: 0.9rem;
     color: var(--text);
   }
 
-  .ota-controls {
-    display: flex;
-    gap: 0.4rem;
-    flex-wrap: wrap;
-  }
-
-  .ota-btn {
-    padding: 0.4rem 0.7rem;
-    border: 1px solid var(--line);
+  .ota-anim-btn {
+    padding: 0.4rem 0.75rem;
+    border: 1px solid rgba(232, 185, 106, 0.45);
     border-radius: 7px;
-    background: #151a23;
-    color: var(--dim);
+    background: rgba(232, 185, 106, 0.05);
+    color: var(--gold);
     font-family: var(--sans);
     font-size: 0.72rem;
     cursor: pointer;
   }
 
-  .ota-btn:hover {
+  .ota-anim-btn:hover {
+    background: rgba(232, 185, 106, 0.12);
+  }
+
+  .ota-anim-stage {
+    max-width: 37rem;
+    margin: 1.25rem auto 0;
+  }
+
+  .ota-source {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #11141b;
+    flex-wrap: wrap;
+  }
+
+  .ota-chip-name {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 600;
     color: var(--text);
-    border-color: #3a4152;
   }
 
-  .ota-btn-primary {
-    border-color: rgba(232, 185, 106, 0.5);
-    background: rgba(232, 185, 106, 0.06);
+  .ota-chip-meta {
+    display: block;
+    margin-top: 0.15rem;
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    color: var(--faint);
+  }
+
+  .ota-package {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 3px;
+    width: 160px;
+  }
+
+  .ota-package span {
+    height: 14px;
+    border-radius: 2px;
+    background: #1d222d;
+  }
+
+  .ota-package.is-sending span {
+    animation: package-pulse 0.9s ease-in-out infinite;
+  }
+
+  .ota-package span:nth-child(2) { animation-delay: 0.06s; }
+  .ota-package span:nth-child(3) { animation-delay: 0.12s; }
+  .ota-package span:nth-child(4) { animation-delay: 0.18s; }
+  .ota-package span:nth-child(5) { animation-delay: 0.24s; }
+  .ota-package span:nth-child(6) { animation-delay: 0.3s; }
+  .ota-package span:nth-child(7) { animation-delay: 0.36s; }
+  .ota-package span:nth-child(8) { animation-delay: 0.42s; }
+
+  .ota-wire {
+    position: relative;
+    height: 48px;
+    margin-left: 26px;
+    border-left: 1px dashed #2a2f3b;
+  }
+
+  .ota-wire.is-active {
+    border-left-color: rgba(232, 185, 106, 0.45);
+  }
+
+  .ota-wire-label {
+    position: absolute;
+    top: 50%;
+    left: 16px;
+    transform: translateY(-50%);
+    font-size: 0.62rem;
+    color: var(--faint);
+  }
+
+  .ota-wire-aes .ota-wire-label {
+    left: 26px;
+  }
+
+  .ota-byte {
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    width: 7px;
+    height: 7px;
+    border-radius: 1px;
+    background: var(--gold);
+    opacity: 0;
+  }
+
+  .ota-wire.is-active .ota-byte {
+    opacity: 1;
+    animation: wire-fall 0.9s linear infinite;
+  }
+
+  .ota-wire .ota-byte:nth-of-type(2) {
+    animation-delay: 0.3s;
+  }
+
+  .ota-wire .ota-byte:nth-of-type(3) {
+    animation-delay: 0.6s;
+  }
+
+  .ota-lock {
+    position: absolute;
+    top: 50%;
+    left: -15px;
+    width: 28px;
+    height: 24px;
+    margin-top: -12px;
+    border: 2px solid var(--gold-dim);
+    border-radius: 5px;
+    background: var(--bg);
+    transition: border-color 0.3s ease;
+  }
+
+  .ota-lock::before {
+    content: "";
+    position: absolute;
+    top: -11px;
+    left: 5px;
+    width: 14px;
+    height: 11px;
+    border: 2px solid var(--gold-dim);
+    border-bottom: 0;
+    border-radius: 8px 8px 0 0;
+    transform-origin: bottom left;
+    transition:
+      transform 0.35s ease,
+      border-color 0.3s ease;
+  }
+
+  .ota-lock::after {
+    content: "";
+    position: absolute;
+    top: 9px;
+    left: 11px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--gold-dim);
+  }
+
+  .ota-lock.is-open {
+    border-color: var(--gold);
+  }
+
+  .ota-lock.is-open::before {
+    border-color: var(--gold);
+    transform: rotate(-38deg) translateX(1px);
+  }
+
+  .ota-memory {
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #11141b;
+    transition:
+      border-color 0.3s ease,
+      box-shadow 0.3s ease;
+  }
+
+  .ota-memory.is-active {
+    border-color: rgba(232, 185, 106, 0.6);
+    box-shadow: 0 0 30px -16px rgba(232, 185, 106, 0.9);
+  }
+
+  .ota-memory-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .ota-memory-name {
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .ota-memory-meta {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: var(--faint);
+  }
+
+  .ota-cells {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+    margin-top: 0.6rem;
+  }
+
+  .ota-cells-int {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .ota-cell {
+    height: 12px;
+    border-radius: 2px;
+    background: #1d222d;
+    transition:
+      background 0.25s ease,
+      box-shadow 0.25s ease;
+  }
+
+  .ota-cell.is-filled {
+    background: linear-gradient(180deg, #f0c87e, #c8953f);
+    box-shadow: 0 0 8px rgba(232, 185, 106, 0.45);
+    animation: cell-pop 0.2s ease-out;
+  }
+
+  .ota-memory-foot {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-top: 0.55rem;
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: var(--faint);
+  }
+
+  .ota-app {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #11141b;
+    transition:
+      border-color 0.3s ease,
+      box-shadow 0.3s ease;
+  }
+
+  .ota-app.is-active {
+    border-color: rgba(232, 185, 106, 0.65);
+    box-shadow: 0 0 30px -14px rgba(232, 185, 106, 0.8);
+  }
+
+  .ota-app-name {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .ota-app-meta {
+    display: block;
+    margin-top: 0.15rem;
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: var(--faint);
+  }
+
+  .ota-app-signals {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .ota-check {
     color: var(--gold);
+    font-size: 1.1rem;
+    opacity: 0;
+    transform: scale(0.7);
+    transition:
+      opacity 0.3s ease,
+      transform 0.3s ease;
   }
 
-  .ota-progress {
+  .ota-check.is-visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .ota-led {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #2a2f3b;
+  }
+
+  .ota-led.is-on {
+    background: #9ece6a;
+    box-shadow: 0 0 12px #9ece6a;
+    animation: led-blink 0.9s steps(2, start) infinite;
+  }
+
+  .ota-anim-foot {
+    max-width: 37rem;
+    margin: 1rem auto 0;
+  }
+
+  .ota-anim-note {
+    font-size: 0.64rem;
+    line-height: 1.6;
+    color: var(--faint);
+  }
+
+  .ota-anim-progress {
     height: 2px;
-    margin-top: 1rem;
+    margin-top: 0.6rem;
     overflow: hidden;
     border-radius: 1px;
     background: var(--line);
   }
 
-  .ota-progress span {
+  .ota-anim-progress span {
     display: block;
     width: 0;
     height: 100%;
     background: var(--gold);
-    transition: width 0.4s ease;
+    transition: width 0.2s linear;
   }
 
-  .ota-flow {
-    max-width: 34rem;
-    margin: 1.25rem auto 0;
+  @keyframes package-pulse {
+    0%,
+    100% {
+      background: #1d222d;
+    }
+    50% {
+      background: var(--gold);
+      box-shadow: 0 0 8px rgba(232, 185, 106, 0.5);
+    }
   }
 
-  .ota-node {
-    position: relative;
-    padding: 0.8rem 1rem 0.85rem;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    background: #11141b;
-    transition:
-      border-color 0.25s ease,
-      background 0.25s ease,
-      box-shadow 0.25s ease;
-  }
-
-  .ota-node.is-active {
-    border-color: var(--gold);
-    background: rgba(232, 185, 106, 0.05);
-    box-shadow: 0 0 30px -14px rgba(232, 185, 106, 0.8);
-  }
-
-  .ota-node.is-done {
-    border-color: rgba(232, 185, 106, 0.18);
-  }
-
-  .ota-node-head {
-    display: flex;
-    align-items: baseline;
-    gap: 0.6rem;
-    flex-wrap: wrap;
-  }
-
-  .ota-node-name {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--text);
-  }
-
-  .ota-node-tag {
-    font-family: var(--mono);
-    font-size: 0.6rem;
-    letter-spacing: 0.04em;
-    color: var(--gold-dim);
-  }
-
-  .ota-node-meta {
-    margin-top: 0.2rem;
-    font-size: 0.68rem;
-    color: var(--faint);
-  }
-
-  .ota-node-status {
-    position: absolute;
-    top: 0.85rem;
-    right: 1rem;
-    font-family: var(--mono);
-    font-size: 0.6rem;
-    color: var(--faint);
-  }
-
-  .ota-node.is-active .ota-node-status {
-    color: var(--gold);
-  }
-
-  .ota-meter {
-    height: 3px;
-    margin-top: 0.55rem;
-    overflow: hidden;
-    border-radius: 2px;
-    background: #1d222d;
-  }
-
-  .ota-meter span {
-    display: block;
-    width: 0;
-    height: 100%;
-    background: var(--gold);
-    transition: width 0.8s ease;
-  }
-
-  .ota-link {
-    position: relative;
-    height: 44px;
-    margin-left: 26px;
-    border-left: 1px dashed #2a2f3b;
-  }
-
-  .ota-link-label {
-    position: absolute;
-    top: 50%;
-    left: 14px;
-    transform: translateY(-50%);
-    font-size: 0.63rem;
-    color: var(--faint);
-  }
-
-  .ota-packet {
-    position: absolute;
-    top: -4px;
-    left: -4px;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--gold);
-    box-shadow: 0 0 12px rgba(232, 185, 106, 0.9);
-    opacity: 0;
-  }
-
-  .ota-link.is-running {
-    border-left-color: rgba(232, 185, 106, 0.45);
-  }
-
-  .ota-link.is-running .ota-packet {
-    opacity: 1;
-    animation: ota-flow-down 0.9s ease-in-out forwards;
-  }
-
-  .ota-link.is-running.up .ota-packet {
-    animation-name: ota-flow-up;
-  }
-
-  @keyframes ota-flow-down {
-    from {
+  @keyframes wire-fall {
+    0% {
       top: -4px;
+      opacity: 0;
+    }
+    12% {
+      opacity: 1;
+    }
+    88% {
+      opacity: 1;
+    }
+    100% {
+      top: calc(100% - 4px);
+      opacity: 0;
+    }
+  }
+
+  @keyframes cell-pop {
+    from {
+      transform: scale(0.85);
     }
     to {
-      top: calc(100% - 4px);
+      transform: scale(1);
     }
   }
 
-  @keyframes ota-flow-up {
-    from {
-      top: calc(100% - 4px);
+  @keyframes led-blink {
+    0%,
+    49% {
+      opacity: 1;
     }
-    to {
-      top: -4px;
+    50%,
+    100% {
+      opacity: 0.45;
     }
-  }
-
-  .ota-log-wrap {
-    margin-top: 1.25rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--line);
-  }
-
-  .ota-log-title {
-    font-family: var(--mono);
-    font-size: 0.6rem;
-    letter-spacing: 0.12em;
-    color: var(--faint);
-  }
-
-  .ota-log {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    max-height: 140px;
-    margin-top: 0.5rem;
-    padding: 0;
-    overflow: auto;
-    list-style: none;
-    font-family: var(--mono);
-    font-size: 0.66rem;
-    line-height: 1.65;
-    color: var(--dim);
-  }
-
-  .ota-log li {
-    display: flex;
-    gap: 0.6rem;
-  }
-
-  .ota-log li span {
-    flex: 0 0 auto;
-    color: var(--gold-dim);
-  }
-
-  .ota-note {
-    margin-top: 0.75rem;
-    font-size: 0.65rem;
-    line-height: 1.6;
-    color: var(--faint);
-  }
-
-  .ota-note code {
-    font-size: 0.9em;
   }
 
   @media (max-width: 560px) {
-    .ota-node-status {
-      position: static;
-      display: block;
-      margin-top: 0.35rem;
+    .ota-source {
+      align-items: flex-start;
+      flex-direction: column;
     }
 
-    .ota-link {
-      height: 38px;
+    .ota-package {
+      width: 100%;
+    }
+
+    .ota-wire {
+      height: 40px;
+    }
+
+    .ota-cell {
+      height: 10px;
     }
   }
-
 </style>

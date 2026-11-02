@@ -1,59 +1,36 @@
 ---
-import { learningProjects } from '../data/learning';
+import LearningNav from './learning-nav.astro';
 
-const project = learningProjects[0];
+interface Project {
+  slug: string;
+  title: string;
+  sub: string;
+  chapters: string[];
+}
+
+interface Props {
+  projects: Project[];
+}
+
+const { projects } = Astro.props;
 ---
 
 <aside class="sidebar">
   <details class="sidebar-mobile">
     <summary>
       <span>学习目录</span>
-      <span class="count">{project.chapters.length}</span>
+      <span class="count">{projects.length}</span>
     </summary>
     <nav aria-label="学习目录">
-      <div class="learning-project">
-        <span class="learning-project-title">{project.title}</span>
-        <span class="learning-project-sub">{project.sub}</span>
-      </div>
-      <ul class="post-list">
-        {
-          project.chapters.map((chapter) => (
-            <li>
-              <a
-                class="post-link"
-                href={`#${chapter.id}`}
-                data-chapter-link
-              >
-                <span class="post-link-title">{chapter.title}</span>
-              </a>
-            </li>
-          ))
-        }
-      </ul>
+      <LearningNav projects={projects} />
     </nav>
   </details>
 
   <nav class="sidebar-nav" aria-label="学习目录">
     <p class="nav-label">
       <span>学习</span>
-      <span class="count">{learningProjects.length}</span>
+      <span class="count">{projects.length}</span>
     </p>
-
-    <div class="learning-project">
-      <span class="learning-project-title">{project.title}</span>
-      <span class="learning-project-sub">{project.sub}</span>
-    </div>
-
-    <ul class="post-list">
-      {
-        project.chapters.map((chapter) => (
-          <li>
-            <a class="post-link" href={`#${chapter.id}`} data-chapter-link>
-              <span class="post-link-title">{chapter.title}</span>
-            </a>
-          </li>
-        ))
-      }
-    </ul>
+    <LearningNav projects={projects} />
   </nav>
 </aside>

@@ -2,11 +2,9 @@
 import '../styles/global.css';
 import Sidebar from '../components/sidebar.astro';
 import ShareSidebar from '../components/share-sidebar.astro';
-import LearningSidebar from '../components/learning-sidebar.astro';
 import { getCollection } from 'astro:content';
 import { formatDate } from '../utils/date';
 import { shareCount } from '../data/shares';
-import { learningProjects } from '../data/learning';
 
 type Section = 'articles' | 'share' | 'learning';
 
@@ -15,6 +13,7 @@ interface Props {
   description?: string;
   currentId?: string;
   section?: Section;
+  meta?: string;
 }
 
 const {
@@ -22,6 +21,7 @@ const {
   description = '一个人的学习日志。一路走，一路堆石头。',
   currentId,
   section = 'articles',
+  meta,
 } = Astro.props;
 
 const posts = (await getCollection('posts', ({ data }) => !data.draft)).sort(
@@ -29,14 +29,13 @@ const posts = (await getCollection('posts', ({ data }) => !data.draft)).sort(
 );
 
 const latest = posts[0];
-const meta =
-  section === 'share'
+const headerMeta =
+  meta ??
+  (section === 'share'
     ? `${shareCount} 个分享`
-    : section === 'learning'
-      ? `${learningProjects.length} 个项目`
-      : latest
-        ? `${posts.length} 篇 · 最后更新 ${formatDate(latest.data.date)}`
-        : '还没有文章';
+    : latest
+      ? `${posts.length} 篇 · 最后更新 ${formatDate(latest.data.date)}`
+      : '还没有文章');
 
 const pageTitle = title ? `${title} · CAIRN` : 'CAIRN · 一路走，一路堆石头';
 ---
@@ -87,16 +86,16 @@ const pageTitle = title ? `${title} · CAIRN` : 'CAIRN · 一路走，一路堆�
           </a>
         </nav>
 
-        <span class="header-meta">{meta}</span>
+        <span class="header-meta">{headerMeta}</span>
       </div>
     </header>
 
     <div class="shell">
       {
-        section === 'share' ? (
+        Astro.slots.has('sidebar') ? (
+          <slot name="sidebar" />
+        ) : section === 'share' ? (
           <ShareSidebar />
-        ) : section === 'learning' ? (
-          <LearningSidebar />
         ) : (
           <Sidebar posts={posts} currentId={currentId} />
         )

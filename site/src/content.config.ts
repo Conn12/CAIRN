@@ -13,4 +13,17 @@ const posts = defineCollection({
   }),
 });
 
-export const collections = { posts };
+const learning = defineCollection({
+  loader: glob({ pattern: '*.md', base: '../content/learning' }),
+  schema: z.object({
+    title: z.string(),
+    summary: z.string(),
+    sub: z.string(),
+    status: z.string().default(''),
+    order: z.number().default(0),
+    demo: z.string().optional(),
+    stack: z.array(z.string()).default([]),
+  }),
+});
+
+export const collections = { posts, learning };

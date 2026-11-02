@@ -1,0 +1,47 @@
+---
+interface Project {
+  slug: string;
+  title: string;
+  sub: string;
+  chapters: string[];
+}
+
+interface Props {
+  projects: Project[];
+}
+
+const { projects } = Astro.props;
+---
+
+{
+  projects.map((project, projectIndex) => (
+    <section
+      class:list={['learning-group', { 'is-active': projectIndex === 0 }]}
+      data-learning-group={project.slug}
+    >
+      <a
+        class="learning-project-link"
+        href={`#${project.slug}`}
+        data-learning-project={project.slug}
+      >
+        <span class="learning-project-title">{project.title}</span>
+        <span class="learning-project-sub">{project.sub}</span>
+      </a>
+
+      <ul class="post-list learning-chapters">
+        {project.chapters.map((chapter, chapterIndex) => (
+          <li>
+            <button
+              type="button"
+              class="post-link chapter-link"
+              data-chapter-project={project.slug}
+              data-chapter-index={chapterIndex}
+            >
+              {chapter}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))
+}
