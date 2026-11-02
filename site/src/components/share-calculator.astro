@@ -189,6 +189,8 @@
     });
 
     document.addEventListener('keydown', (event) => {
+      if (root.offsetParent === null) return;
+
       const { key } = event;
 
       if (key >= '0' && key <= '9') {

@@ -1,29 +1,44 @@
 ---
 import Base from '../layouts/base.astro';
-import ShareImage from '../components/share-image.astro';
+import ShareIllustration from '../components/share-illustration.astro';
 import ShareCalculator from '../components/share-calculator.astro';
 import ShareSolar from '../components/share-solar.astro';
+import PelicanBike from '../../../assets/images/share-pelican-bike/01.svg';
+import ElephantPiano from '../../../assets/images/share-elephant-piano/01.svg';
 ---
 
 <Base title="分享" description="图片、工具、建模，做完就放在这儿。" share>
   <div class="share-intro">
     <p class="share-kicker">分享</p>
     <h1>做出来的东西，放在这里。</h1>
-    <p class="share-lede">
-      图片、工具、建模。先各放一个，以后多了再拆成独立板块。
-    </p>
+    <p class="share-lede">图片、工具、建模。左边点一条，右边看一条。</p>
   </div>
 
-  <section class="share-section" id="images" data-share-section>
+  <section class="share-entry is-active" id="pelican-bike" data-share-entry>
     <header class="share-head">
       <span class="share-tag">图片分享</span>
-      <h2>醍醐骑自行车</h2>
-      <p>第一张图。夜色、石堆、一辆自行车。</p>
+      <h2>鹈鹕骑自行车</h2>
+      <p>一只鹈鹕，一辆自行车，一条夜路。</p>
     </header>
-    <ShareImage />
+    <ShareIllustration
+      image={PelicanBike}
+      caption="鹈鹕骑自行车 · 矢量绘制"
+    />
   </section>
 
-  <section class="share-section" id="tools" data-share-section>
+  <section class="share-entry" id="elephant-piano" data-share-entry>
+    <header class="share-head">
+      <span class="share-tag">图片分享</span>
+      <h2>大象弹钢琴</h2>
+      <p>聚光灯下，一头大象用鼻子弹琴。</p>
+    </header>
+    <ShareIllustration
+      image={ElephantPiano}
+      caption="大象弹钢琴 · 矢量绘制"
+    />
+  </section>
+
+  <section class="share-entry" id="calculator" data-share-entry>
     <header class="share-head">
       <span class="share-tag">工具分享</span>
       <h2>在线计算器</h2>
@@ -32,7 +47,7 @@ import ShareSolar from '../components/share-solar.astro';
     <ShareCalculator />
   </section>
 
-  <section class="share-section" id="models" data-share-section>
+  <section class="share-entry" id="solar-system" data-share-entry>
     <header class="share-head">
       <span class="share-tag">建模分享</span>
       <h2>太阳系</h2>
@@ -41,3 +56,54 @@ import ShareSolar from '../components/share-solar.astro';
     <ShareSolar />
   </section>
 </Base>
+
+<script>
+  const entries = [...document.querySelectorAll('[data-share-entry]')];
+  const links = [...document.querySelectorAll('[data-share-link]')];
+
+  if (entries.length > 0) {
+    const firstId = entries[0].id;
+
+    const activate = (id) => {
+      const target =
+        entries.find((entry) => entry.id === id) ?? entries[0];
+
+      entries.forEach((entry) => {
+        entry.classList.toggle('is-active', entry === target);
+      });
+
+      links.forEach((link) => {
+        const active = link.hash === `#${target.id}`;
+        link.classList.toggle('active', active);
+        if (active) link.setAttribute('aria-current', 'page');
+        else link.removeAttribute('aria-current');
+      });
+
+      return target;
+    };
+
+    const fromHash = () =>
+      decodeURIComponent(location.hash.slice(1)) || firstId;
+
+    activate(fromHash());
+
+    if (location.hash) {
+      requestAnimationFrame(() => {
+        document.getElementById(fromHash())?.scrollIntoView();
+      });
+    }
+
+    window.addEventListener('hashchange', () => {
+      activate(fromHash());
+    });
+
+    links.forEach((link) => {
+      link.addEventListener('click', () => {
+        const target = activate(link.hash.slice(1));
+        requestAnimationFrame(() => {
+          target.scrollIntoView({ block: 'start' });
+        });
+      });
+    });
+  }
+</script>

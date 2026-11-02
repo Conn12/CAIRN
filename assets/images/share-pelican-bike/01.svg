@@ -1,25 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600">
-  <title>醍醐骑自行车</title>
-  <desc>夜色里，一个戴围巾的人骑着自行车经过石堆与山丘。</desc>
+  <title>鹈鹕骑自行车</title>
+  <desc>夜色里，一只戴围巾的鹈鹕骑着自行车经过石堆与山丘。</desc>
 
   <defs>
-    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="pb-sky" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#0b0d11"/>
       <stop offset="0.55" stop-color="#131821"/>
       <stop offset="1" stop-color="#0b0d11"/>
     </linearGradient>
-    <radialGradient id="moon-glow" cx="0.5" cy="0.5" r="0.5">
+    <radialGradient id="pb-moon-glow" cx="0.5" cy="0.5" r="0.5">
       <stop offset="0" stop-color="#e8b96a" stop-opacity="0.32"/>
       <stop offset="0.55" stop-color="#e8b96a" stop-opacity="0.08"/>
       <stop offset="1" stop-color="#e8b96a" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="vignette" cx="0.5" cy="0.45" r="0.75">
+    <radialGradient id="pb-vignette" cx="0.5" cy="0.45" r="0.75">
       <stop offset="0.55" stop-color="#000000" stop-opacity="0"/>
       <stop offset="1" stop-color="#000000" stop-opacity="0.35"/>
     </radialGradient>
   </defs>
 
-  <rect width="960" height="600" fill="url(#sky)"/>
+  <rect width="960" height="600" fill="url(#pb-sky)"/>
 
   <g fill="#e6e9ef">
     <circle cx="90" cy="86" r="1.4" opacity="0.5"/>
@@ -36,7 +36,7 @@
     <circle cx="210" cy="300" r="0.9" opacity="0.25"/>
   </g>
 
-  <circle cx="740" cy="160" r="155" fill="url(#moon-glow)"/>
+  <circle cx="740" cy="160" r="155" fill="url(#pb-moon-glow)"/>
   <circle cx="740" cy="160" r="78" fill="#e8b96a" opacity="0.92"/>
   <g fill="#0b0d11" opacity="0.08">
     <circle cx="716" cy="138" r="13"/>
@@ -91,20 +91,33 @@
 
   <path d="M486 402 L514 397" stroke="#e8b96a" stroke-width="8" stroke-linecap="round"/>
 
-  <g fill="none" stroke="#dfe4ee" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M508 396 L560 342"/>
-    <path d="M560 342 L586 368 L606 388"/>
-    <path d="M508 396 L545 432 L522 466"/>
+  <path d="M470 372 C445 366 428 376 418 392 C440 398 458 392 474 386 Z" fill="#cfd6e2"/>
+
+  <path d="M468 398 C455 355 480 315 525 310 C570 305 600 340 600 378 C600 415 565 432 525 430 C495 429 476 416 468 398 Z" fill="#e6e9ef"/>
+
+  <path d="M560 328 C578 300 598 280 618 272" fill="none" stroke="#e6e9ef" stroke-width="30" stroke-linecap="round"/>
+
+  <circle cx="620" cy="268" r="24" fill="#e6e9ef"/>
+
+  <path d="M638 256 L736 278 Q742 283 734 289 L638 297 Z" fill="#e8a45e"/>
+  <path d="M638 291 C664 340 716 334 736 286 L638 297 Z" fill="#d98b45"/>
+  <path d="M641 288 L730 284" stroke="#b87333" stroke-width="2" opacity="0.55"/>
+
+  <circle cx="630" cy="260" r="3" fill="#0b0d11"/>
+
+  <path d="M600 250 Q610 238 622 248" fill="none" stroke="#e6e9ef" stroke-width="7" stroke-linecap="round"/>
+
+  <path d="M594 292 C576 308 550 314 526 304 C538 322 570 324 596 310 Z" fill="#7dcfff" opacity="0.9"/>
+  <path d="M526 304 C500 294 478 298 462 286 C470 306 498 318 528 318 Z" fill="#7dcfff" opacity="0.6"/>
+
+  <path d="M522 338 C552 332 582 352 602 384 C576 394 544 382 522 338 Z" fill="#d5dae4"/>
+  <g fill="none" stroke="#b9c0d0" stroke-width="2" stroke-linecap="round">
+    <path d="M540 352 C558 358 574 370 586 384"/>
+    <path d="M530 366 C546 372 560 382 570 392"/>
   </g>
 
-  <g fill="none" stroke="#b9c0d0" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" opacity="0.8">
-    <path d="M512 400 L556 442 L538 478"/>
-  </g>
-
-  <path d="M578 332 C548 320 520 326 492 308 C505 330 535 346 576 348 Z" fill="#7dcfff" opacity="0.9"/>
-
-  <circle cx="588" cy="318" r="24" fill="#dfe4ee"/>
-  <path d="M566 312 Q588 288 610 312 L606 304 Q588 284 570 304 Z" fill="#7dcfff"/>
+  <path d="M548 415 L540 468" fill="none" stroke="#e8a45e" stroke-width="7" stroke-linecap="round"/>
+  <path d="M528 474 L538 470 L548 476" fill="none" stroke="#e8a45e" stroke-width="5" stroke-linecap="round"/>
 
   <g fill="#e8b96a">
     <ellipse cx="820" cy="520" rx="42" ry="14" opacity="0.75"/>
@@ -112,5 +125,5 @@
     <ellipse cx="820" cy="487" rx="24" ry="10"/>
   </g>
 
-  <rect width="960" height="600" fill="url(#vignette)"/>
+  <rect width="960" height="600" fill="url(#pb-vignette)"/>
 </svg>

@@ -1,10 +1,16 @@
 ---
-import TihuBike from '../../../assets/images/share-tihu-bike/01.svg';
+interface Props {
+  image: any;
+  caption: string;
+  alt?: string;
+}
+
+const { image: Illustration, caption, alt } = Astro.props;
 ---
 
 <figure class="share-figure">
-  <TihuBike />
-  <figcaption>醍醐骑车 · 矢量绘制</figcaption>
+  <Illustration role="img" aria-label={alt ?? caption} />
+  <figcaption>{caption}</figcaption>
 </figure>
 
 <style>

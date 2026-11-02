@@ -234,6 +234,23 @@ img {
   letter-spacing: 0.04em;
 }
 
+.share-group + .share-group {
+  margin-top: 1.5rem;
+}
+
+.share-group-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0 0.75rem;
+  margin-bottom: 0.45rem;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  color: var(--faint);
+}
+
 .post-link {
   display: block;
   padding: 0.5rem 0.75rem;
@@ -276,7 +293,8 @@ img {
   color: var(--gold);
 }
 
-.post-link.active time {
+.post-link.active time,
+.post-link.active .share-sub {
   color: var(--gold-dim);
 }
 
@@ -511,15 +529,17 @@ main {
   color: var(--dim);
 }
 
-.share-section {
+.share-entry {
   margin-top: 2.75rem;
   scroll-margin-top: 5.5rem;
 }
 
-.share-section + .share-section {
-  margin-top: 3.5rem;
-  padding-top: 3rem;
-  border-top: 1px solid var(--line);
+.js .share-entry {
+  display: none;
+}
+
+.js .share-entry.is-active {
+  display: block;
 }
 
 .share-tag {

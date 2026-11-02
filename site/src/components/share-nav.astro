@@ -1,0 +1,24 @@
+---
+import { shareCategories } from '../data/shares';
+---
+
+{
+  shareCategories.map((category) => (
+    <section class="share-group">
+      <h2 class="share-group-title">
+        <span>{category.title}</span>
+        <span class="count">{category.items.length}</span>
+      </h2>
+      <ul class="share-list">
+        {category.items.map((item) => (
+          <li>
+            <a class="post-link" href={`#${item.id}`} data-share-link>
+              <span class="post-link-title">{item.title}</span>
+              <span class="share-sub">{item.sub}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))
+}
