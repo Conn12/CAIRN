@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600">
+  <title>醍醐骑自行车</title>
+  <desc>夜色里，一个戴围巾的人骑着自行车经过石堆与山丘。</desc>
+
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b0d11"/>
+      <stop offset="0.55" stop-color="#131821"/>
+      <stop offset="1" stop-color="#0b0d11"/>
+    </linearGradient>
+    <radialGradient id="moon-glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#e8b96a" stop-opacity="0.32"/>
+      <stop offset="0.55" stop-color="#e8b96a" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#e8b96a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="vignette" cx="0.5" cy="0.45" r="0.75">
+      <stop offset="0.55" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.35"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="960" height="600" fill="url(#sky)"/>
+
+  <g fill="#e6e9ef">
+    <circle cx="90" cy="86" r="1.4" opacity="0.5"/>
+    <circle cx="170" cy="140" r="1" opacity="0.35"/>
+    <circle cx="260" cy="72" r="1.6" opacity="0.55"/>
+    <circle cx="340" cy="150" r="1" opacity="0.3"/>
+    <circle cx="430" cy="96" r="1.3" opacity="0.45"/>
+    <circle cx="520" cy="60" r="1" opacity="0.35"/>
+    <circle cx="600" cy="120" r="1.5" opacity="0.4"/>
+    <circle cx="820" cy="70" r="1.2" opacity="0.5"/>
+    <circle cx="890" cy="150" r="1.6" opacity="0.4"/>
+    <circle cx="860" cy="230" r="1" opacity="0.3"/>
+    <circle cx="120" cy="230" r="1.2" opacity="0.35"/>
+    <circle cx="210" cy="300" r="0.9" opacity="0.25"/>
+  </g>
+
+  <circle cx="740" cy="160" r="155" fill="url(#moon-glow)"/>
+  <circle cx="740" cy="160" r="78" fill="#e8b96a" opacity="0.92"/>
+  <g fill="#0b0d11" opacity="0.08">
+    <circle cx="716" cy="138" r="13"/>
+    <circle cx="760" cy="176" r="9"/>
+    <circle cx="734" cy="192" r="6"/>
+  </g>
+
+  <g fill="none" stroke="#8b93a7" stroke-width="2" stroke-linecap="round" opacity="0.35">
+    <path d="M380 180 q8 -8 16 0 q8 -8 16 0"/>
+    <path d="M430 150 q6 -6 12 0 q6 -6 12 0"/>
+  </g>
+
+  <path d="M0 430 C150 392 270 414 390 432 C510 450 620 402 730 412 C830 420 900 442 960 432 L960 600 L0 600 Z" fill="#12161e"/>
+  <path d="M0 474 C150 446 300 476 440 484 C580 492 700 454 960 474 L960 600 L0 600 Z" fill="#0e1117"/>
+  <path d="M0 540 C180 502 340 532 520 522 C700 512 840 502 960 522 L960 600 L0 600 Z" fill="#151a23"/>
+
+  <path d="M-20 574 C160 542 360 560 540 550 C720 540 860 542 980 558" fill="none" stroke="#e8b96a" stroke-width="2" stroke-dasharray="18 16" opacity="0.22"/>
+
+  <g fill="none" stroke="#8b93a7" stroke-width="3" stroke-linecap="round" opacity="0.25">
+    <path d="M296 432 C326 426 352 429 378 434"/>
+    <path d="M278 468 C314 460 344 464 372 469"/>
+    <path d="M306 504 C338 497 364 500 390 504"/>
+  </g>
+
+  <ellipse cx="532" cy="532" rx="158" ry="11" fill="#000000" opacity="0.32"/>
+
+  <g stroke="#e8b96a" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="430" cy="470" r="52"/>
+    <circle cx="640" cy="470" r="52"/>
+    <g stroke-width="2" opacity="0.55">
+      <path d="M430 418 V522 M378 470 H482 M393 433 L467 507 M467 433 L393 507"/>
+      <path d="M640 418 V522 M588 470 H692 M603 433 L677 507 M677 433 L603 507"/>
+    </g>
+    <path d="M430 470 L500 404 L520 470 Z"/>
+    <path d="M430 470 L520 470"/>
+    <path d="M500 404 L600 394 L520 470"/>
+    <path d="M520 470 L600 394"/>
+    <path d="M600 394 L640 470"/>
+    <path d="M600 394 L600 382 L620 375 L632 381"/>
+  </g>
+
+  <g fill="#e8b96a">
+    <circle cx="430" cy="470" r="6"/>
+    <circle cx="640" cy="470" r="6"/>
+    <circle cx="520" cy="470" r="8"/>
+  </g>
+
+  <g stroke="#e8b96a" stroke-width="5" stroke-linecap="round">
+    <path d="M520 470 L540 480"/>
+    <path d="M534 484 H548"/>
+  </g>
+
+  <path d="M486 402 L514 397" stroke="#e8b96a" stroke-width="8" stroke-linecap="round"/>
+
+  <g fill="none" stroke="#dfe4ee" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M508 396 L560 342"/>
+    <path d="M560 342 L586 368 L606 388"/>
+    <path d="M508 396 L545 432 L522 466"/>
+  </g>
+
+  <g fill="none" stroke="#b9c0d0" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" opacity="0.8">
+    <path d="M512 400 L556 442 L538 478"/>
+  </g>
+
+  <path d="M578 332 C548 320 520 326 492 308 C505 330 535 346 576 348 Z" fill="#7dcfff" opacity="0.9"/>
+
+  <circle cx="588" cy="318" r="24" fill="#dfe4ee"/>
+  <path d="M566 312 Q588 288 610 312 L606 304 Q588 284 570 304 Z" fill="#7dcfff"/>
+
+  <g fill="#e8b96a">
+    <ellipse cx="820" cy="520" rx="42" ry="14" opacity="0.75"/>
+    <ellipse cx="820" cy="502" rx="33" ry="12" opacity="0.85"/>
+    <ellipse cx="820" cy="487" rx="24" ry="10"/>
+  </g>
+
+  <rect width="960" height="600" fill="url(#vignette)"/>
+</svg>

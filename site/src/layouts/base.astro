@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import Sidebar from '../components/sidebar.astro';
+import ShareSidebar from '../components/share-sidebar.astro';
 import { getCollection } from 'astro:content';
 import { formatDate } from '../utils/date';
 
@@ -8,12 +9,14 @@ interface Props {
   title?: string;
   description?: string;
   currentId?: string;
+  share?: boolean;
 }
 
 const {
   title,
   description = '一个人的学习日志。一路走，一路堆石头。',
   currentId,
+  share = false,
 } = Astro.props;
 
 const posts = (await getCollection('posts', ({ data }) => !data.draft)).sort(
@@ -21,9 +24,11 @@ const posts = (await getCollection('posts', ({ data }) => !data.draft)).sort(
 );
 
 const latest = posts[0];
-const meta = latest
-  ? `${posts.length} 篇 · 最后更新 ${formatDate(latest.data.date)}`
-  : '还没有文章';
+const meta = share
+  ? '3 个分享'
+  : latest
+    ? `${posts.length} 篇 · 最后更新 ${formatDate(latest.data.date)}`
+    : '还没有文章';
 
 const pageTitle = title ? `${title} · CAIRN` : 'CAIRN · 一路走，一路堆石头';
 ---
@@ -46,12 +51,30 @@ const pageTitle = title ? `${title} · CAIRN` : 'CAIRN · 一路走，一路堆�
           <a class="logo" href="/">CAIRN</a>
           <span class="tagline">一路走，一路堆石头</span>
         </div>
+
+        <nav class="section-nav" aria-label="版块">
+          <a
+            class:list={['section-link', { active: !share }]}
+            href="/"
+            aria-current={share ? undefined : 'page'}
+          >
+            文章
+          </a>
+          <a
+            class:list={['section-link', { active: share }]}
+            href="/share/"
+            aria-current={share ? 'page' : undefined}
+          >
+            分享
+          </a>
+        </nav>
+
         <span class="header-meta">{meta}</span>
       </div>
     </header>
 
     <div class="shell">
-      <Sidebar posts={posts} currentId={currentId} />
+      {share ? <ShareSidebar /> : <Sidebar posts={posts} currentId={currentId} />}
 
       <div class="content">
         <main>

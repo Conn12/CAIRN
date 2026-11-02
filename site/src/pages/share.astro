@@ -1,0 +1,43 @@
+---
+import Base from '../layouts/base.astro';
+import ShareImage from '../components/share-image.astro';
+import ShareCalculator from '../components/share-calculator.astro';
+import ShareSolar from '../components/share-solar.astro';
+---
+
+<Base title="分享" description="图片、工具、建模，做完就放在这儿。" share>
+  <div class="share-intro">
+    <p class="share-kicker">分享</p>
+    <h1>做出来的东西，放在这里。</h1>
+    <p class="share-lede">
+      图片、工具、建模。先各放一个，以后多了再拆成独立板块。
+    </p>
+  </div>
+
+  <section class="share-section" id="images" data-share-section>
+    <header class="share-head">
+      <span class="share-tag">图片分享</span>
+      <h2>醍醐骑自行车</h2>
+      <p>第一张图。夜色、石堆、一辆自行车。</p>
+    </header>
+    <ShareImage />
+  </section>
+
+  <section class="share-section" id="tools" data-share-section>
+    <header class="share-head">
+      <span class="share-tag">工具分享</span>
+      <h2>在线计算器</h2>
+      <p>不用跳转，直接在页面里算。</p>
+    </header>
+    <ShareCalculator />
+  </section>
+
+  <section class="share-section" id="models" data-share-section>
+    <header class="share-head">
+      <span class="share-tag">建模分享</span>
+      <h2>太阳系</h2>
+      <p>用 Three.js 搭的一个太阳系示意。拖动旋转，滚轮缩放。</p>
+    </header>
+    <ShareSolar />
+  </section>
+</Base>

@@ -1,0 +1,31 @@
+---
+import TihuBike from '../../../assets/images/share-tihu-bike/01.svg';
+---
+
+<figure class="share-figure">
+  <TihuBike />
+  <figcaption>醍醐骑车 · 矢量绘制</figcaption>
+</figure>
+
+<style>
+  .share-figure {
+    margin: 0;
+  }
+
+  .share-figure :global(svg) {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #0b0d11;
+  }
+
+  .share-figure figcaption {
+    margin-top: 0.7rem;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--faint);
+    letter-spacing: 0.04em;
+  }
+</style>

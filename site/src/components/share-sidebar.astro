@@ -1,0 +1,59 @@
+---
+const categories = [
+  { href: '#images', title: '图片分享', sub: '一张画' },
+  { href: '#tools', title: '工具分享', sub: '一个小工具' },
+  { href: '#models', title: '建模分享', sub: '一个太阳系' },
+];
+---
+
+<aside class="sidebar">
+  <details class="sidebar-mobile">
+    <summary>
+      <span>分享分类</span>
+      <span class="count">{categories.length}</span>
+    </summary>
+    <nav aria-label="分享分类">
+      <ul class="share-list">
+        {
+          categories.map((item) => (
+            <li>
+              <a class="post-link" href={item.href}>
+                <span class="post-link-title">{item.title}</span>
+                <span class="share-sub">{item.sub}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </details>
+
+  <nav class="sidebar-nav" aria-label="分享分类">
+    <p class="nav-label">
+      <span>分享</span>
+      <span class="count">{categories.length}</span>
+    </p>
+    <ul class="share-list">
+      {
+        categories.map((item) => (
+          <li>
+            <a class="post-link" href={item.href}>
+              <span class="post-link-title">{item.title}</span>
+              <span class="share-sub">{item.sub}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+</aside>
+
+<script>
+  const panel = document.querySelector('.sidebar-mobile');
+
+  panel?.addEventListener('click', (event) => {
+    if (event.target instanceof Element && event.target.closest('a')) {
+      panel.removeAttribute('open');
+    }
+  });
+</script>

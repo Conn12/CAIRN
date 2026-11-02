@@ -7,4 +7,12 @@ export default defineConfig({
       theme: 'github-dark',
     },
   },
+  vite: {
+    server: {
+      fs: {
+        // 允许读取 site 外面的 assets/，图片仍然只有一个家。
+        allow: ['..'],
+      },
+    },
+  },
 });

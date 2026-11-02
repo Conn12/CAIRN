@@ -1,0 +1,255 @@
+---
+---
+
+<div class="solar" data-solar>
+  <canvas data-solar-canvas role="img" aria-label="太阳系三维示意，可拖动旋转"></canvas>
+  <span class="solar-hint">拖动旋转 · 滚轮缩放</span>
+  <p class="solar-fallback">当前浏览器不支持 WebGL，3D 场景无法显示。</p>
+</div>
+
+<script>
+  import * as THREE from 'three';
+  import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+  const containers = document.querySelectorAll('[data-solar]');
+
+  containers.forEach((container) => {
+    const canvas = container.querySelector('[data-solar-canvas]');
+    if (!(canvas instanceof HTMLCanvasElement)) return;
+
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    } catch {
+      container.classList.add('is-failed');
+      return;
+    }
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 2000);
+    camera.position.set(0, 34, 56);
+
+    const controls = new OrbitControls(camera, canvas);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.enablePan = false;
+    controls.minDistance = 12;
+    controls.maxDistance = 110;
+    controls.maxPolarAngle = Math.PI * 0.52;
+    controls.target.set(0, 0, 0);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+
+    const sunLight = new THREE.PointLight(0xffe0a3, 1200, 400, 2);
+    scene.add(sunLight);
+
+    const sun = new THREE.Mesh(
+      new THREE.SphereGeometry(2.6, 48, 48),
+      new THREE.MeshBasicMaterial({ color: 0xe8b96a }),
+    );
+    scene.add(sun);
+
+    const sunGlow = new THREE.Mesh(
+      new THREE.SphereGeometry(3.7, 32, 32),
+      new THREE.MeshBasicMaterial({
+        color: 0xe8b96a,
+        transparent: true,
+        opacity: 0.12,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
+    );
+    scene.add(sunGlow);
+
+    const planets = [
+      { distance: 4.6, size: 0.3, speed: 1.65, color: 0x9aa3b2 },
+      { distance: 6.3, size: 0.48, speed: 1.2, color: 0xd8b07a },
+      { distance: 8.3, size: 0.52, speed: 0.92, color: 0x6fa8dc },
+      { distance: 10.4, size: 0.4, speed: 0.72, color: 0xc97a5a },
+      { distance: 13.4, size: 1.1, speed: 0.44, color: 0xc9a27a },
+      { distance: 16.6, size: 0.9, speed: 0.3, color: 0xd6c08a, ring: true },
+      { distance: 19.6, size: 0.64, speed: 0.2, color: 0x8fd1d1 },
+      { distance: 22.6, size: 0.64, speed: 0.14, color: 0x6d8fd1 },
+    ];
+
+    const orbitPoints = (radius: number) =>
+      Array.from({ length: 160 }, (_, index) => {
+        const angle = (index / 160) * Math.PI * 2;
+        return new THREE.Vector3(
+          Math.cos(angle) * radius,
+          0,
+          Math.sin(angle) * radius,
+        );
+      });
+
+    const bodies = planets.map((data, index) => {
+      const orbit = new THREE.LineLoop(
+        new THREE.BufferGeometry().setFromPoints(orbitPoints(data.distance)),
+        new THREE.LineBasicMaterial({
+          color: data.color,
+          transparent: true,
+          opacity: 0.16,
+        }),
+      );
+      scene.add(orbit);
+
+      const mesh = new THREE.Mesh(
+        new THREE.SphereGeometry(data.size, 28, 28),
+        new THREE.MeshStandardMaterial({
+          color: data.color,
+          roughness: 0.82,
+          metalness: 0.04,
+        }),
+      );
+      scene.add(mesh);
+
+      if (data.ring) {
+        const ring = new THREE.Mesh(
+          new THREE.RingGeometry(data.size * 1.45, data.size * 2.25, 64),
+          new THREE.MeshBasicMaterial({
+            color: 0xd6c08a,
+            transparent: true,
+            opacity: 0.42,
+            side: THREE.DoubleSide,
+          }),
+        );
+        ring.rotation.x = Math.PI / 2;
+        mesh.add(ring);
+      }
+
+      return {
+        mesh,
+        distance: data.distance,
+        speed: data.speed,
+        angle: (index / planets.length) * Math.PI * 2,
+      };
+    });
+
+    const starGeometry = new THREE.BufferGeometry();
+    const starPositions = new Float32Array(1600 * 3);
+    for (let index = 0; index < 1600; index += 1) {
+      const radius = 120 + Math.random() * 180;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      starPositions[index * 3] = radius * Math.sin(phi) * Math.cos(theta);
+      starPositions[index * 3 + 1] = radius * Math.cos(phi) * 0.6;
+      starPositions[index * 3 + 2] = radius * Math.sin(phi) * Math.sin(theta);
+    }
+    starGeometry.setAttribute(
+      'position',
+      new THREE.BufferAttribute(starPositions, 3),
+    );
+    const stars = new THREE.Points(
+      starGeometry,
+      new THREE.PointsMaterial({
+        color: 0x8b93a7,
+        size: 0.55,
+        transparent: true,
+        opacity: 0.65,
+        sizeAttenuation: true,
+      }),
+    );
+    scene.add(stars);
+
+    const resize = () => {
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+      if (width === 0 || height === 0) return;
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+    };
+
+    const observer = new ResizeObserver(resize);
+    observer.observe(container);
+    resize();
+
+    const clock = new THREE.Clock();
+    const reduceMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)',
+    ).matches;
+
+    const placeBodies = () => {
+      for (const body of bodies) {
+        body.mesh.position.x = Math.cos(body.angle) * body.distance;
+        body.mesh.position.z = Math.sin(body.angle) * body.distance;
+      }
+    };
+
+    placeBodies();
+
+    renderer.setAnimationLoop(() => {
+      const delta = Math.min(clock.getDelta(), 0.05);
+
+      if (!reduceMotion) {
+        for (const body of bodies) {
+          body.angle += body.speed * delta * 0.12;
+        }
+        placeBodies();
+        sun.rotation.y += delta * 0.06;
+        stars.rotation.y += delta * 0.004;
+      }
+
+      controls.update();
+      renderer.render(scene, camera);
+    });
+  });
+</script>
+
+<style>
+  .solar {
+    position: relative;
+    height: clamp(320px, 46vw, 460px);
+    margin-top: 1.75rem;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: radial-gradient(circle at 50% 45%, #151b26 0%, #0b0d11 72%);
+  }
+
+  .solar canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+  }
+
+  .solar canvas:active {
+    cursor: grabbing;
+  }
+
+  .solar-hint {
+    position: absolute;
+    right: 14px;
+    bottom: 11px;
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.04em;
+    color: var(--faint);
+    pointer-events: none;
+  }
+
+  .solar-fallback {
+    display: none;
+    position: absolute;
+    inset: 0;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--dim);
+  }
+
+  .solar.is-failed canvas,
+  .solar.is-failed .solar-hint {
+    display: none;
+  }
+
+  .solar.is-failed .solar-fallback {
+    display: flex;
+  }
+</style>

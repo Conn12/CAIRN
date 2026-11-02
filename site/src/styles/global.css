@@ -138,6 +138,32 @@ img {
   white-space: nowrap;
 }
 
+.section-nav {
+  display: flex;
+  gap: 0.25rem;
+  margin-left: 1.5rem;
+}
+
+.section-link {
+  padding: 0.35rem 0.7rem;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  color: var(--dim);
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.section-link:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+}
+
+.section-link.active {
+  background: rgba(232, 185, 106, 0.08);
+  color: var(--gold);
+}
+
 /* ---------- 双栏骨架 ---------- */
 
 .shell {
@@ -191,11 +217,21 @@ img {
   color: var(--faint);
 }
 
-.post-list {
+.post-list,
+.share-list {
   display: flex;
   flex-direction: column;
   gap: 2px;
   list-style: none;
+}
+
+.share-sub {
+  display: block;
+  margin-top: 0.15rem;
+  font-family: var(--mono);
+  font-size: 0.64rem;
+  color: var(--faint);
+  letter-spacing: 0.04em;
 }
 
 .post-link {
@@ -449,6 +485,62 @@ main {
   font-weight: 600;
 }
 
+/* ---------- 分享页 ---------- */
+
+.share-intro {
+  padding-bottom: 2.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.share-kicker {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  color: var(--gold);
+}
+
+.share-intro h1 {
+  margin-top: 0.6rem;
+  font-size: clamp(1.7rem, 2.6vw, 2.35rem);
+  line-height: 1.35;
+}
+
+.share-lede {
+  margin-top: 0.85rem;
+  font-size: 0.95rem;
+  color: var(--dim);
+}
+
+.share-section {
+  margin-top: 2.75rem;
+  scroll-margin-top: 5.5rem;
+}
+
+.share-section + .share-section {
+  margin-top: 3.5rem;
+  padding-top: 3rem;
+  border-top: 1px solid var(--line);
+}
+
+.share-tag {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  color: var(--gold-dim);
+}
+
+.share-head h2 {
+  margin-top: 0.35rem;
+  font-size: 1.45rem;
+  line-height: 1.4;
+}
+
+.share-head p {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--dim);
+}
+
 /* ---------- 文章页脚 ---------- */
 
 .post-nav {
@@ -543,6 +635,10 @@ main {
 }
 
 @media (max-width: 560px) {
+  .tagline {
+    display: none;
+  }
+
   .post-header {
     padding-bottom: 1.5rem;
     margin-bottom: 2rem;

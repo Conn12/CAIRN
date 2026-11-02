@@ -1,0 +1,333 @@
+---
+---
+
+<div class="calculator" data-calculator>
+  <div class="calc-screen">
+    <span class="calc-label">在线计算器</span>
+    <output class="calc-display" data-display aria-live="polite">0</output>
+  </div>
+
+  <div class="calc-keys">
+    <button type="button" class="key key-fn" data-action="clear">C</button>
+    <button type="button" class="key key-fn" data-action="back" aria-label="退格">⌫</button>
+    <button type="button" class="key key-fn" data-action="percent" aria-label="百分比">%</button>
+    <button type="button" class="key key-op" data-op="/" aria-label="除">÷</button>
+
+    <button type="button" class="key" data-digit="7">7</button>
+    <button type="button" class="key" data-digit="8">8</button>
+    <button type="button" class="key" data-digit="9">9</button>
+    <button type="button" class="key key-op" data-op="*" aria-label="乘">×</button>
+
+    <button type="button" class="key" data-digit="4">4</button>
+    <button type="button" class="key" data-digit="5">5</button>
+    <button type="button" class="key" data-digit="6">6</button>
+    <button type="button" class="key key-op" data-op="-" aria-label="减">−</button>
+
+    <button type="button" class="key" data-digit="1">1</button>
+    <button type="button" class="key" data-digit="2">2</button>
+    <button type="button" class="key" data-digit="3">3</button>
+    <button type="button" class="key key-op" data-op="+" aria-label="加">＋</button>
+
+    <button type="button" class="key key-zero" data-digit="0">0</button>
+    <button type="button" class="key" data-digit=".">.</button>
+    <button type="button" class="key key-eq" data-action="equals">=</button>
+  </div>
+</div>
+
+<p class="calc-hint">支持键盘输入：数字、+ − × ÷、Enter、Esc、Backspace</p>
+
+<script>
+  const root = document.querySelector('[data-calculator]');
+
+  if (root) {
+    const display = root.querySelector('[data-display]');
+
+    let current = '0';
+    let stored = null;
+    let operator = null;
+    let resetNext = false;
+    let error = false;
+
+    const format = (value) => {
+      if (!Number.isFinite(value)) return '不能除以 0';
+      const rounded = Math.round(value * 1e10) / 1e10;
+      const text = String(rounded);
+      return text.length > 14 ? rounded.toExponential(6) : text;
+    };
+
+    const calculate = (a, b, op) => {
+      switch (op) {
+        case '+':
+          return a + b;
+        case '-':
+          return a - b;
+        case '*':
+          return a * b;
+        case '/':
+          return b === 0 ? Number.NaN : a / b;
+        default:
+          return b;
+      }
+    };
+
+    const render = () => {
+      display.textContent = current;
+      display.classList.toggle('is-error', error);
+    };
+
+    const resetAll = () => {
+      current = '0';
+      stored = null;
+      operator = null;
+      resetNext = false;
+      error = false;
+      render();
+    };
+
+    const inputDigit = (digit) => {
+      if (error) resetAll();
+      if (resetNext) {
+        current = digit;
+        resetNext = false;
+      } else {
+        current = current === '0' ? digit : current + digit;
+      }
+      render();
+    };
+
+    const inputDot = () => {
+      if (error) resetAll();
+      if (resetNext) {
+        current = '0.';
+        resetNext = false;
+      } else if (!current.includes('.')) {
+        current += '.';
+      }
+      render();
+    };
+
+    const chooseOperator = (nextOperator) => {
+      if (error) resetAll();
+
+      if (operator !== null && !resetNext) {
+        const result = calculate(Number(stored), Number(current), operator);
+        if (!Number.isFinite(result)) {
+          current = '不能除以 0';
+          stored = null;
+          operator = null;
+          resetNext = true;
+          error = true;
+          render();
+          return;
+        }
+        current = format(result);
+        stored = current;
+      } else if (operator === null) {
+        stored = current;
+      }
+
+      operator = nextOperator;
+      resetNext = true;
+      render();
+    };
+
+    const equals = () => {
+      if (error || operator === null || stored === null || resetNext) return;
+
+      const result = calculate(Number(stored), Number(current), operator);
+
+      if (!Number.isFinite(result)) {
+        current = '不能除以 0';
+        error = true;
+      } else {
+        current = format(result);
+      }
+
+      stored = null;
+      operator = null;
+      resetNext = true;
+      render();
+    };
+
+    const percent = () => {
+      if (error) return;
+      current = format(Number(current) / 100);
+      resetNext = true;
+      render();
+    };
+
+    const backspace = () => {
+      if (error) {
+        resetAll();
+        return;
+      }
+      if (resetNext) return;
+      current = current.length > 1 ? current.slice(0, -1) : '0';
+      render();
+    };
+
+    root.addEventListener('click', (event) => {
+      const button = event.target.closest('button');
+      if (!button) return;
+
+      const { digit, action, op } = button.dataset;
+
+      if (digit) {
+        if (digit === '.') inputDot();
+        else inputDigit(digit);
+      } else if (op) {
+        chooseOperator(op);
+      } else if (action === 'clear') {
+        resetAll();
+      } else if (action === 'back') {
+        backspace();
+      } else if (action === 'percent') {
+        percent();
+      } else if (action === 'equals') {
+        equals();
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      const { key } = event;
+
+      if (key >= '0' && key <= '9') {
+        inputDigit(key);
+      } else if (key === '.') {
+        inputDot();
+      } else if (key === '+' || key === '-' || key === '*' || key === '/') {
+        chooseOperator(key);
+        event.preventDefault();
+      } else if (key === 'Enter' || key === '=') {
+        equals();
+        event.preventDefault();
+      } else if (key === 'Escape') {
+        resetAll();
+      } else if (key === 'Backspace') {
+        backspace();
+        event.preventDefault();
+      } else if (key === '%') {
+        percent();
+      }
+    });
+  }
+</script>
+
+<style>
+  .calculator {
+    max-width: 360px;
+    margin-top: 1.75rem;
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: linear-gradient(180deg, #141821 0%, #0e1117 100%);
+    box-shadow: 0 24px 60px -36px #000000;
+  }
+
+  .calc-screen {
+    padding: 12px 14px 18px;
+    text-align: right;
+  }
+
+  .calc-label {
+    display: block;
+    margin-bottom: 10px;
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.14em;
+    color: var(--faint);
+  }
+
+  .calc-display {
+    display: block;
+    overflow: hidden;
+    font-family: var(--mono);
+    font-size: 2rem;
+    line-height: 1.2;
+    color: var(--text);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .calc-display.is-error {
+    font-size: 1.05rem;
+    color: #f7768e;
+  }
+
+  .calc-keys {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+
+  .key {
+    height: 52px;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #161a23;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 1.05rem;
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      border-color 0.15s ease,
+      transform 0.06s ease;
+  }
+
+  .key:hover {
+    background: #1d222d;
+    border-color: #3a4152;
+  }
+
+  .key:active {
+    transform: translateY(1px);
+  }
+
+  .key-fn {
+    background: #11141b;
+    color: var(--dim);
+  }
+
+  .key-op {
+    background: rgba(232, 185, 106, 0.06);
+    color: var(--gold);
+  }
+
+  .key-op:hover {
+    background: rgba(232, 185, 106, 0.12);
+  }
+
+  .key-eq {
+    border-color: var(--gold);
+    background: var(--gold);
+    color: #15110a;
+    font-weight: 700;
+  }
+
+  .key-eq:hover {
+    background: #f0c87e;
+  }
+
+  .key-zero {
+    grid-column: span 2;
+  }
+
+  .calc-hint {
+    margin-top: 0.8rem;
+    font-size: 0.7rem;
+    color: var(--faint);
+  }
+
+  @media (max-width: 420px) {
+    .calculator {
+      padding: 14px;
+    }
+
+    .key {
+      height: 48px;
+    }
+  }
+</style>
