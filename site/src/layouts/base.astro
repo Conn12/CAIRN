@@ -2,22 +2,26 @@
 import '../styles/global.css';
 import Sidebar from '../components/sidebar.astro';
 import ShareSidebar from '../components/share-sidebar.astro';
+import LearningSidebar from '../components/learning-sidebar.astro';
 import { getCollection } from 'astro:content';
 import { formatDate } from '../utils/date';
 import { shareCount } from '../data/shares';
+import { learningProjects } from '../data/learning';
+
+type Section = 'articles' | 'share' | 'learning';
 
 interface Props {
   title?: string;
   description?: string;
   currentId?: string;
-  share?: boolean;
+  section?: Section;
 }
 
 const {
   title,
   description = '一个人的学习日志。一路走，一路堆石头。',
   currentId,
-  share = false,
+  section = 'articles',
 } = Astro.props;
 
 const posts = (await getCollection('posts', ({ data }) => !data.draft)).sort(
@@ -25,11 +29,14 @@ const posts = (await getCollection('posts', ({ data }) => !data.draft)).sort(
 );
 
 const latest = posts[0];
-const meta = share
-  ? `${shareCount} 个分享`
-  : latest
-    ? `${posts.length} 篇 · 最后更新 ${formatDate(latest.data.date)}`
-    : '还没有文章';
+const meta =
+  section === 'share'
+    ? `${shareCount} 个分享`
+    : section === 'learning'
+      ? `${learningProjects.length} 个项目`
+      : latest
+        ? `${posts.length} 篇 · 最后更新 ${formatDate(latest.data.date)}`
+        : '还没有文章';
 
 const pageTitle = title ? `${title} · CAIRN` : 'CAIRN · 一路走，一路堆石头';
 ---
@@ -58,18 +65,25 @@ const pageTitle = title ? `${title} · CAIRN` : 'CAIRN · 一路走，一路堆�
 
         <nav class="section-nav" aria-label="版块">
           <a
-            class:list={['section-link', { active: !share }]}
+            class:list={['section-link', { active: section === 'articles' }]}
             href="/"
-            aria-current={share ? undefined : 'page'}
+            aria-current={section === 'articles' ? 'page' : undefined}
           >
             文章
           </a>
           <a
-            class:list={['section-link', { active: share }]}
+            class:list={['section-link', { active: section === 'share' }]}
             href="/share/"
-            aria-current={share ? 'page' : undefined}
+            aria-current={section === 'share' ? 'page' : undefined}
           >
             分享
+          </a>
+          <a
+            class:list={['section-link', { active: section === 'learning' }]}
+            href="/learning/"
+            aria-current={section === 'learning' ? 'page' : undefined}
+          >
+            学习
           </a>
         </nav>
 
@@ -78,7 +92,15 @@ const pageTitle = title ? `${title} · CAIRN` : 'CAIRN · 一路走，一路堆�
     </header>
 
     <div class="shell">
-      {share ? <ShareSidebar /> : <Sidebar posts={posts} currentId={currentId} />}
+      {
+        section === 'share' ? (
+          <ShareSidebar />
+        ) : section === 'learning' ? (
+          <LearningSidebar />
+        ) : (
+          <Sidebar posts={posts} currentId={currentId} />
+        )
+      }
 
       <div class="content">
         <main>

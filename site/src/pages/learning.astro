@@ -1,0 +1,418 @@
+---
+import Base from '../layouts/base.astro';
+import OtaDemo from '../components/ota-demo.astro';
+---
+
+<Base
+  title="学习"
+  description="STM32 串口 OTA 升级：内存分区、Bootloader、YMODEM、AES 与外部 Flash 暂存。"
+  section="learning"
+>
+  <header class="learning-header">
+    <p class="learning-kicker">学习 / 项目 01</p>
+    <h1>STM32 串口 OTA 升级</h1>
+    <p class="learning-lede">
+      从内存分区和启动流程开始，走到 Bootloader 跳转、YMODEM 收包、AES
+      解密，以及外部 Flash 暂存到内部 Flash 的完整链路。
+    </p>
+    <div class="learning-tags">
+      <span>STM32F103ZET6</span>
+      <span>512 KB Flash / 64 KB RAM</span>
+      <span>USART1 · 115200</span>
+      <span>W25Q32 · 4 MB</span>
+    </div>
+  </header>
+
+  <div class="prose learning-prose">
+    <aside class="note">
+      <strong>阅读说明</strong>
+      <p>
+        本文依据 <code>_07bootloader</code> 与 <code>_LED1</code> 的源码阅读整理，保留
+        01 → 07 的演进过程，未做板端实测。地址与容量以
+        <code>boot_flash.h</code> 为准；改地址时，分区宏、APP 链接地址、向量表和加密包长度限制要一起核对。
+      </p>
+    </aside>
+
+    <h2 id="overview">项目概况</h2>
+    <p>
+      文件夹名字叫 OTA，但当前代码实现的是 <strong>USART1 串口 IAP</strong>：没有联网、没有服务器下载，电脑通过串口把固件发给板子，Bootloader 负责收包、解密、写 Flash，然后跳到 APP。以后接无线模块时，暂存、安装和跳转这几段可以继续复用。
+    </p>
+    <p>整个工程只有两个角色：</p>
+    <ul>
+      <li><strong>Bootloader</strong>：芯片复位后先运行，负责接收固件、安装和跳转。</li>
+      <li><strong>APP</strong>：实际业务程序。当前用 <code>_LED1</code> 的 LED 交替闪烁验证升级是否成功。</li>
+    </ul>
+
+    <p>这个文件夹保存了分阶段的独立工程，读的时候按顺序看，不要把它们拼在一起：</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>阶段</th><th>做了什么</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>_01BootLoader</code></td><td>自定义串口协议，先收长度再收数据，校验后跳转。</td></tr>
+          <tr><td><code>_02BootLoader</code></td><td>加入更新标志、W25Q32 元数据和搬运逻辑。</td></tr>
+          <tr><td><code>_03BootLoader</code></td><td>EEPROM / 外部 Flash 读写实验，主循环在转储外部 Flash。</td></tr>
+          <tr><td><code>_04bootloader</code></td><td>YMODEM 接收，直接写入内部 APP 区。</td></tr>
+          <tr><td><code>_05bootloader</code></td><td>先写内部备用区，再搬运到 APP 区。</td></tr>
+          <tr><td><code>_06bootloader</code></td><td>内部备用区接收加密包，加入 AES 解密。</td></tr>
+          <tr><td><code>_07bootloader</code></td><td>加密包先暂存到 W25Q32，再解密写入内部 APP，最终版。</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="memory">内存与启动：先把地图画出来</h2>
+    <p>
+      STM32F103ZET6 是 Cortex-M3，内部 Flash 512 KB，起始地址
+      <code>0x08000000</code>；SRAM 64 KB，起始地址
+      <code>0x20000000</code>。F103 高容量型号的 Flash 页大小是 <strong>2 KB</strong>，写 Flash 时通常按半字（16 位）编程。
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>区域</th><th>起始</th><th>结束（不含）</th><th>大小</th><th>用途</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Bootloader 预留区</td><td><code>0x08000000</code></td><td><code>0x08008000</code></td><td>32 KB</td><td>启动与升级代码</td></tr>
+          <tr><td>内部 APP 区</td><td><code>0x08008000</code></td><td><code>0x08020000</code></td><td>96 KB</td><td>解密后的应用</td></tr>
+          <tr><td>内部备用区</td><td><code>0x08020000</code></td><td><code>0x08080000</code></td><td>384 KB</td><td>05 版的暂存区</td></tr>
+          <tr><td>W25Q32 暂存区</td><td><code>0x000000</code></td><td><code>0x400000</code></td><td>4 MB</td><td>07 版暂存加密包</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>芯片复位后的启动顺序可以简化成：</p>
+    <ol>
+      <li>内核从向量表第 0 个字取出初始 <strong>MSP</strong>（主栈指针）。</li>
+      <li>从第 1 个字取出 <strong>Reset_Handler</strong> 的地址并跳过去。</li>
+      <li>执行 <code>SystemInit()</code>，配置时钟和向量表相关设置。</li>
+      <li>进入 C 运行环境，最后调用 <code>main()</code>。</li>
+    </ol>
+    <p>
+      向量表默认在 <code>0x08000000</code>。APP 被放到
+      <code>0x08008000</code> 后，它的前 8 个字节仍然是“初始 MSP + 复位入口”，但内核默认不会去那里找。APP 必须在启动时把
+      <code>SCB-&gt;VTOR</code> 改成自己的基址，否则中断会跳回 Bootloader 的向量表。这就是“APP 不能随便链接到
+      <code>0x08000000</code>”的根本原因。
+    </p>
+    <p>
+      还有两个容易混淆的点：W25Q32 的地址是 SPI Flash 内部的<strong>字节偏移</strong>，不是 STM32 的内存地址，不能直接解引用，必须调用
+      <code>W25Qx_Read()</code>；内部 Flash 是<strong>擦除后写</strong>，而且写之前要解锁。
+    </p>
+
+    <h2 id="split">Bootloader 与 APP 怎么分工</h2>
+    <p>
+      Bootloader 占前 32 KB，APP 从 <code>0x08008000</code> 开始。两个工程要分别编译：Bootloader 用
+      <code>_07bootloader/MDK-ARM</code>，APP 用 <code>_LED1/MDK-ARM</code>。APP 的链接起点必须是
+      <code>0x08008000</code>，并且在自己的 <code>main()</code> 开头设置
+      <code>SCB-&gt;VTOR = 0x08008000</code>。
+    </p>
+    <p>跳转前，Bootloader 会检查 APP 向量表的两个关键值：</p>
+    <ul>
+      <li><strong>初始 MSP</strong> 是否 8 字节对齐、是否落在 SRAM 范围内。</li>
+      <li><strong>复位入口</strong> 的最低位是否为 1（Thumb 指令），以及入口地址是否落在 APP 区。</li>
+    </ul>
+    <p>
+      检查通过后，跳转流程是：关闭中断 → 反初始化 USART1、部分 GPIO 和 RCC → 关闭 SysTick → 清 NVIC
+      挂起 → 设置 <code>VTOR</code> → 设置 MSP → 跳转到 APP 的复位入口。跳转函数的核心只有几句：
+    </p>
+    <pre><code>{`MSR MSP, R0
+CPSIE I
+BX  R1`}</code></pre>
+    <p>
+      这里有两个源码层面的提醒：Bootloader 的链接配置目前仍允许使用整个 512 KB
+      Flash，并没有强制限制在 32 KB 内，编译后要看 map 确认没有越过
+      <code>0x08008000</code>；另外 <code>BOOT_SRAM_END</code> 写成了
+      <code>0x20020000</code>，而实际 RAM 只有 64 KB（到
+      <code>0x20010000</code>），栈指针检查范围过宽。
+    </p>
+
+    <h2 id="stage-01">第一版串口收包</h2>
+    <p>
+      01 版的思路很直接：电脑先发一个简单的头部，告诉板子“这次固件有多长”，然后连续发原始数据；板子用状态机接收，收够长度后检查范围并跳转。这个版本的重点不是可靠传输，而是把“串口 → 缓冲区 → Flash → 跳转”这条链路跑通。
+    </p>
+    <p>它能工作，但问题也很明显：</p>
+    <ul>
+      <li>没有包序号、没有重传，丢一个字节后面全乱。</li>
+      <li>没有整包校验，收完长度对不代表内容对。</li>
+      <li>没有断电恢复和版本管理，失败了只能重发。</li>
+      <li>原始 BIN 直接传输，没有压缩、加密和身份验证。</li>
+    </ul>
+    <p>
+      02 版开始加入更新标志、W25Q32 元数据和从外部暂存区搬运的逻辑；03 版则是 EEPROM / 外部 Flash
+      的读写实验，主循环实际在转储外部 Flash，完整的安装函数被注释掉了，不能当作完整升级版本直接使用。不同版本的地址和协议并不完全一致，这也是不要跨版本拼代码的原因。
+    </p>
+
+    <h2 id="ymodem">YMODEM 协议：把“发文件”做可靠</h2>
+    <p>
+      04 版开始换 YMODEM。它比自定义协议多做了一件关键的事：把文件拆成带序号的数据包，每个包都要等接收方回应
+      <code>ACK</code>，出错就 <code>NAK</code> 重发，并且第一包会带上文件名和长度。
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>字段</th><th>长度</th><th>说明</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>帧头</td><td>1 字节</td><td><code>SOH</code> 表示 128 字节包，<code>STX</code> 表示 1024 字节包</td></tr>
+          <tr><td>包序号</td><td>1 字节</td><td>从 0 开始递增</td></tr>
+          <tr><td>序号反码</td><td>1 字节</td><td>和包序号相加必须等于 <code>0xFF</code></td></tr>
+          <tr><td>数据</td><td>128 / 1024 字节</td><td>不足部分会填充</td></tr>
+          <tr><td>CRC16</td><td>2 字节</td><td>标准 YMODEM 用它校验本包数据</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>一次接收的大致节奏：</p>
+    <ol>
+      <li>接收方先不断发字符 <code>C</code>，请求发送方使用 CRC 模式。</li>
+      <li>序号 0 的包携带 <code>文件名\0十进制文件长度</code>，接收方解析长度并擦除暂存区。</li>
+      <li>序号 1 开始是文件数据；每包写完回 <code>ACK</code>。</li>
+      <li>收到上一包的重复时只补 <code>ACK</code>，不重复写 Flash。</li>
+      <li>最后一包只写文件声明的剩余字节，丢弃填充。</li>
+      <li>收到 <code>EOT</code> 且长度吻合后回 <code>ACK</code>，再等一个空文件头收尾。</li>
+    </ol>
+    <p>
+      当前实现里，会话开始后的收包超时是 1000 ms，累计错误超过 3 次就退出；返回值从
+      <code>-1</code> 到 <code>-7</code> 分别对应取消、长度非法、中止、超时、控制字发送失败、外部 Flash
+      擦除失败和写入失败。
+    </p>
+
+    <aside class="warn">
+      <strong>这里有一个关键缺口</strong>
+      <p>
+        当前帧处理读取了包尾的两个 CRC 字节，但<strong>没有计算并比较它们</strong>。虽然接收方会发
+        <code>C</code> 请求 CRC 模式，源码里也保留了 <code>Cal_CRC16()</code>，接收路径却没有调用。所以“传输完成”“写入读回一致”“向量表合法”都不能等同于整个固件内容正确。
+      </p>
+    </aside>
+
+    <p>
+      04 版收到数据后直接写内部 APP 区；05 版改成先写内部备用区
+      <code>0x08020000</code>，再通过 <code>BackToApp()</code> 搬运到 APP 区。备用区的意义是先把新固件放稳，再动正在使用的 APP 区，为后面的失败处理和回退留空间。
+    </p>
+
+    <h2 id="encryption">加密与外部暂存：06 → 07</h2>
+    <p>
+      06 版在内部备用区的基础上加入 AES 解密；07 版把接收位置改成 W25Q32，形成最终流程：<strong>串口收包 → 外部 Flash 暂存 → 读取解密 → 写内部 APP → 读回比对 → 向量检查 → 跳转</strong>。
+    </p>
+    <p>加密包不是“BIN 加个后缀”，它有固定结构：</p>
+    <pre><code>{`加密包 = AES(16 字节头) + AES(正文)
+
+头解密后：
+  [0..11]   当前安装代码未验证的保留区
+  [12..15]  原始 BIN 长度，uint32，小端
+
+正文 = 原始 BIN 按 16 字节向上补齐后加密
+总长度 = 16 + ((原始 BIN 长度 + 15) & ~15)`}</code></pre>
+    <p>
+      当前实验参数是 AES-256-CBC，IV 为 ASCII
+      <code>1212121212121212</code>，Key 为 32 个字符的
+      <code>1212...</code>。头和正文使用<strong>同一条 CBC 链</strong>：先解密 16 字节头，读完原始长度后继续解密正文，中途不能重置 IV。工具里的“自定义”字段填
+      <code>12121212</code>，它对应的是工具界面的配置，不是接收端已经实现的密码校验。
+    </p>
+
+    <p>安装函数 <code>BackToApp()</code> 做了这些检查：</p>
+    <ul>
+      <li>文件长度必须是 16 的倍数，且在 32 字节到上限之间。</li>
+      <li>读出并解密 16 字节头，从第 12～15 字节取出原始 BIN 长度。</li>
+      <li>原始长度要在 8 字节到 96 KB 之间，且包总长度必须等于
+        <code>16 + align16(原始长度)</code>。</li>
+      <li>按 2 KB 页擦除 APP 区，逐 16 字节解密，按半字写入
+        <code>0x08008000</code>，每写一个半字立刻读回比较。</li>
+      <li>原始长度为奇数时，末尾半字的高字节补 <code>0xFF</code>。</li>
+      <li>最后解锁 Flash，失败路径也要重新上锁。</li>
+    </ul>
+
+    <p>
+      07 版选择外部 Flash 暂存，好处是 W25Q32 有 4 MB，暂存加密包不占用内部
+      Flash，也方便保留升级包；代价是多了一层 SPI 读写，而且外部 Flash 必须先初始化、按 4 KB
+      扇区擦除、按 256 字节页写入。当前 <code>main()</code> 并没有调用
+      <code>W25Qx_Init()</code>，收包路径直接擦写，这是后续需要补上的检查。
+    </p>
+
+    <h2 id="final-flow">一次完整升级怎么走</h2>
+    <ol>
+      <li>编译 <code>_LED1</code>，确认链接起点是 <code>0x08008000</code>，生成原始 BIN。</li>
+      <li>用加密工具把 BIN 封装成“16 字节头 + 加密正文”，记录原始长度 N 和包长度。</li>
+      <li>编译 <code>_07bootloader</code>，用下载器烧到 <code>0x08000000</code>，确认没有越过 32 KB。</li>
+      <li>串口设为 115200 / 8N1 / 无流控，复位板子，等待
+        <code>Ready for Ymodem</code> 和不断出现的 <code>C</code>。</li>
+      <li>在 Tera Term 里用 YMODEM Send 选择加密包，等待发送和安装。</li>
+      <li>看到 <code>BackToApp result = 0</code>、写入读回通过、向量检查通过后，APP 开始运行。</li>
+    </ol>
+    <p>正常的串口输出大致是：</p>
+    <pre><code>{`Ready for Ymodem
+receive_result = <加密包长度>
+Installing APP...
+BackToApp result = 0
+APP write and readback PASS
+APP vector check PASS`}</code></pre>
+    <p>
+      注意：当前 07 版的 <code>main()</code> 每次复位都会直接进入 YMODEM 接收，没有“先判断 APP 是否有效，再等待几秒或按键决定升级”的逻辑，也没有持久化的待安装标志。复位后不会自动运行已有 APP，这是当前代码的既有行为，不是板子坏了。
+    </p>
+
+    <h2 id="demo">最终流程动画</h2>
+    <p>
+      下面按最终版的主流程走一遍。可以点“播放”自动演示，也可以用“单步”逐步看每个阶段。
+    </p>
+    <OtaDemo />
+
+    <h2 id="limits">这套代码还没做到的事</h2>
+    <p>把“能跑通”和“能当产品用”分开看，下面这些是源码里可以确认的缺口，也是继续学习最值得动手的地方：</p>
+    <ol>
+      <li><strong>YMODEM CRC 没有真正校验。</strong> 读到了 CRC 字节但没有比较，整包完整性没有保证。</li>
+      <li><strong>Bootloader 链接区没有收紧。</strong> 分区宏预留 32 KB，但 Keil 的 IROM 仍允许用满 512 KB，编译后必须检查 map。</li>
+      <li><strong>SRAM 上界写错。</strong> <code>BOOT_SRAM_END</code> 是 <code>0x20020000</code>，实际 64 KB RAM 到 <code>0x20010000</code>。合法的初始栈顶可以等于 RAM 末端，检查时要注意边界。</li>
+      <li><strong>暂存区配置不统一。</strong> <code>YMODEM_ADDR</code> 和 <code>EXT_STAGE_*</code> 分别控制读取来源和写入位置，只改一个不能把整个流程切回内部备用区。</li>
+      <li><strong>外部 Flash 初始化缺失。</strong> 驱动有 <code>W25Qx_Init()</code>，07 版 <code>main()</code> 没有调用，收包前缺少芯片识别和失败处理。</li>
+      <li><strong>没有掉电恢复和回滚。</strong> APP 会被直接擦写，外部副本不等于持久化安装状态；断电或安装失败后没有自动恢复策略。</li>
+      <li><strong>没有版本与身份验证。</strong> 固定 Key、固定 IV、头前 12 字节不检查，也没有版本号、防降级或签名验证。</li>
+      <li><strong>跳转清理不完整。</strong> 反初始化只覆盖了部分 GPIO，PA0 / PC13 等旧配置和 SPI1 还没有完整处理。</li>
+      <li><strong>APP 示例链接大小只有 16 KB。</strong> scatter 里写的是 <code>0x4000</code>，而分区允许 96 KB；扩大 APP 时要同步修改链接大小并确认不越过 <code>0x08020000</code>。</li>
+      <li><strong>没有自动启动策略。</strong> 每次复位都等待升级，缺少超时、按键或标志位选择。</li>
+    </ol>
+
+    <h2 id="quiz">自测：能不能讲清楚</h2>
+    <p>先合上文章，试着回答；想不起来再展开。</p>
+
+    <details class="quiz">
+      <summary>1. 为什么 APP 要链接到 0x08008000，并在启动时设置 VTOR？</summary>
+      <p>
+        因为 Bootloader 占了前面的 32 KB。APP 的向量表在自己的镜像开头，内核默认的向量表基址仍是
+        <code>0x08000000</code>；不设置 <code>VTOR</code>，中断会跳到 Bootloader 的向量表。链接地址和
+        <code>VTOR</code> 必须一致。
+      </p>
+    </details>
+
+    <details class="quiz">
+      <summary>2. Boot_IsAppValid() 检查了哪两样东西？</summary>
+      <p>
+        检查 APP 向量表前两个 32 位字：初始 MSP 是否对齐且落在 SRAM 范围内；复位入口的最低位是否为 1（Thumb），以及入口地址是否落在 APP 区。
+      </p>
+    </details>
+
+    <details class="quiz">
+      <summary>3. YMODEM 里的 ACK 代表什么？重复包为什么要单独处理？</summary>
+      <p>
+        ACK 表示这一包已经被正确接收（当前实现里还包括已写入暂存区），发送方可以继续。如果 ACK
+        在回程丢了，发送方会重发上一包；接收方识别到序号是上一包时只补 ACK，不重复写 Flash，避免数据被写两遍。
+      </p>
+    </details>
+
+    <details class="quiz">
+      <summary>4. 为什么不能直接解引用 W25Q32 的地址？</summary>
+      <p>
+        W25Q32 挂在 SPI1 上，它的 <code>0x000000～0x3FFFFF</code> 是芯片内部的字节偏移，不是
+        STM32 的内存映射地址。访问它必须通过 <code>W25Qx_Read()</code> / <code>W25Qx_Write()</code>
+        发 SPI 命令。
+      </p>
+    </details>
+
+    <details class="quiz">
+      <summary>5. 加密包的长度怎么算？头里哪几个字节有用？</summary>
+      <p>
+        头是 16 字节，正文按 16 字节向上补齐，所以总长度是
+        <code>16 + ((N + 15) &amp; ~15)</code>。当前安装代码只使用头里第 12～15 字节的原始 BIN 长度（uint32，小端），前 12
+        字节没有参与校验。
+      </p>
+    </details>
+
+    <details class="quiz">
+      <summary>6. 当前流程能保证收到的固件内容完整正确吗？</summary>
+      <p>
+        不能完全保证。YMODEM 的 CRC 字节被读取但没有比较；安装阶段的读回只能证明“内部 Flash 里写进去的值等于本次解密输出”，不能证明解密输出本身没有被传输错误破坏。向量表检查也只能挡住入口明显不合法的情况。
+      </p>
+    </details>
+
+    <details class="quiz">
+      <summary>7. 如果要把“每次复位都等升级”改成正常启动，你会怎么做？</summary>
+      <p>
+        在 Flash 或 EEPROM 里保存一个安装状态/版本标志；复位后先检查 APP 是否有效，再按标志、按键或超时决定进入升级还是直接跳转。升级成功后再清除标志。若还要回滚，需要保留旧 APP 或旧包，并在新 APP 启动失败时恢复。
+      </p>
+    </details>
+
+    <details class="quiz">
+      <summary>8. 如果 APP 误链接到 0x08000000，会发生什么？</summary>
+      <p>
+        它会和 Bootloader 抢同一段 Flash，烧录或升级时可能覆盖 Bootloader；即使向量表能跑，跳转地址、分区边界和升级逻辑也全部对不上。APP 必须从
+        <code>0x08008000</code> 链接并设置对应的 <code>VTOR</code>。
+      </p>
+    </details>
+
+    <h2 id="files">关键文件索引</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>文件</th><th>作用</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>_07bootloader/Core/Src/main.c</code></td><td>初始化外设，接收包，调用安装与跳转。</td></tr>
+          <tr><td><code>_07bootloader/Core/Inc/boot_flash.h</code></td><td>内部 / 外部区域地址与容量宏。</td></tr>
+          <tr><td><code>_07bootloader/Middlewares/Ymodem/ymodem_hal.c</code></td><td>YMODEM 接收状态机、暂存区擦除和写入。</td></tr>
+          <tr><td><code>_07bootloader/Bsp/W25Qxx/w25qxx.c</code></td><td>SPI Flash 读写、擦除和状态查询。</td></tr>
+          <tr><td><code>_07bootloader/Tasks/Boot Manager/Boot_Manager.c</code></td><td>解密安装、APP 合法性检查、跳转。</td></tr>
+          <tr><td><code>_07bootloader/Middlewares/Aes/AES.c</code></td><td>AES 算法实现。</td></tr>
+          <tr><td><code>_07bootloader/Core/Src/usart.c</code></td><td>USART1 配置、收发封装和 <code>printf</code> 重定向。</td></tr>
+          <tr><td><code>_LED1/Core/Src/main.c</code></td><td>APP 向量表设置与 LED 运行效果。</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      注意：最新版里 <code>ymodem.c</code> 几乎是空的，Keil 实际加入的是
+      <code>ymodem_hal.c</code>，不要因为文件名相近改错位置。
+    </p>
+  </div>
+</Base>
+
+<script>
+  const links = [...document.querySelectorAll('[data-chapter-link]')];
+  const sections = [
+    ...new Set(
+      links
+        .map((link) => document.querySelector(link.getAttribute('href')))
+        .filter(Boolean),
+    ),
+  ];
+
+  if (sections.length > 0) {
+    const setActive = (id) => {
+      for (const link of links) {
+        const active = link.getAttribute('href') === `#${id}`;
+        link.classList.toggle('active', active);
+        if (active) link.setAttribute('aria-current', 'true');
+        else link.removeAttribute('aria-current');
+      }
+    };
+
+    const update = () => {
+      const offset = 140;
+      let current = sections[0];
+
+      for (const section of sections) {
+        if (section.getBoundingClientRect().top <= offset) {
+          current = section;
+        }
+      }
+
+      setActive(current.id);
+    };
+
+    let ticking = false;
+
+    window.addEventListener(
+      'scroll',
+      () => {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(() => {
+          ticking = false;
+          update();
+        });
+      },
+      { passive: true },
+    );
+
+    update();
+  }
+</script>
