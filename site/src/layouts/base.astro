@@ -1,15 +1,23 @@
 ---
 import '../styles/global.css';
+import Sidebar from '../components/sidebar.astro';
+import { getCollection } from 'astro:content';
 
 interface Props {
   title?: string;
   description?: string;
+  currentId?: string;
 }
 
 const {
   title,
   description = '一个人的学习日志。一路走，一路堆石头。',
+  currentId,
 } = Astro.props;
+
+const posts = (await getCollection('posts', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
+);
 
 const pageTitle = title ? `${title} · CAIRN` : 'CAIRN · 一路走，一路堆石头';
 ---
@@ -22,18 +30,21 @@ const pageTitle = title ? `${title} · CAIRN` : 'CAIRN · 一路走，一路堆�
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
     <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0b0d11" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   </head>
   <body>
-    <header class="site-header">
-      <a class="logo" href="/">CAIRN</a>
-      <span class="tagline">一路走，一路堆石头</span>
-    </header>
-    <main>
-      <slot />
-    </main>
-    <footer class="site-footer">
-      <span>CAIRN · 自用的学习日志</span>
-    </footer>
+    <div class="shell">
+      <Sidebar posts={posts} currentId={currentId} />
+
+      <div class="content">
+        <main>
+          <slot />
+        </main>
+        <footer class="site-footer">
+          <span>© {new Date().getFullYear()} CAIRN</span>
+        </footer>
+      </div>
+    </div>
   </body>
 </html>

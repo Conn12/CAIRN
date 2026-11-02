@@ -1,0 +1,45 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { formatDate } from '../utils/date';
+
+interface Props {
+  posts: CollectionEntry<'posts'>[];
+  currentId?: string;
+}
+
+const { posts, currentId } = Astro.props;
+
+const groups = new Map<string, CollectionEntry<'posts'>[]>();
+for (const post of posts) {
+  const year = String(post.data.date.getFullYear());
+  const items = groups.get(year) ?? [];
+  items.push(post);
+  groups.set(year, items);
+}
+
+const years = [...groups.entries()];
+---
+
+{
+  years.map(([year, items]) => (
+    <section class="year-group">
+      <h2 class="year">{year}</h2>
+      <ul class="post-list">
+        {items.map((post) => (
+          <li>
+            <a
+              class:list={['post-link', { active: post.id === currentId }]}
+              href={`/${post.id}/`}
+              aria-current={post.id === currentId ? 'page' : undefined}
+            >
+              <span class="post-link-title">{post.data.title}</span>
+              <time datetime={post.data.date.toISOString()}>
+                {formatDate(post.data.date)}
+              </time>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))
+}
