@@ -2,20 +2,19 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { PARTS, PART_MAP, CHAPTERS } from './content.js';
+import { MODULES, MODULE_MAP, CHAPTERS } from './content.js';
 
 const stage = document.getElementById('es100-stage');
 const viewport = document.getElementById('es100-viewport');
 const W = () => stage.clientWidth;
 const H = () => stage.clientHeight;
 
-// ---------- 渲染器 ----------
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(W(), H());
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.12;
+renderer.toneMappingExposure = 1.2;
 viewport.appendChild(renderer.domElement);
 
 const labelRenderer = new CSS2DRenderer();
@@ -24,34 +23,32 @@ labelRenderer.domElement.className = 'es100-label-layer';
 labelRenderer.domElement.style.pointerEvents = 'none';
 viewport.appendChild(labelRenderer.domElement);
 
-// ---------- 场景 ----------
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x04090c);
-scene.fog = new THREE.FogExp2(0x04090c, 0.012);
+scene.fog = new THREE.FogExp2(0x04090c, 0.011);
 
-const camera = new THREE.PerspectiveCamera(42, W() / H(), 0.1, 220);
-camera.position.set(18, 16, 22);
+const camera = new THREE.PerspectiveCamera(42, W() / H(), 0.1, 240);
+camera.position.set(20, 17, 28);
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(0, 3.6, 0);
+controls.target.set(0, 3.5, 0);
 controls.enableDamping = true;
 controls.dampingFactor = 0.06;
-controls.minDistance = 8;
-controls.maxDistance = 52;
+controls.minDistance = 9;
+controls.maxDistance = 60;
 controls.maxPolarAngle = Math.PI * 0.49;
 controls.autoRotateSpeed = 0.5;
 controls.update();
 
-// ---------- 灯光 ----------
-scene.add(new THREE.HemisphereLight(0xa8fff0, 0x051018, 1.12));
-scene.add(new THREE.AmbientLight(0x5f8f9a, 0.45));
+scene.add(new THREE.HemisphereLight(0xa8fff0, 0x051018, 1.05));
+scene.add(new THREE.AmbientLight(0x5f8f9a, 0.42));
 
-const keyLight = new THREE.DirectionalLight(0xfff6e8, 2.9);
-keyLight.position.set(14, 24, 12);
+const keyLight = new THREE.DirectionalLight(0xfff6e8, 3.0);
+keyLight.position.set(16, 26, 14);
 scene.add(keyLight);
 
 const fillLight = new THREE.DirectionalLight(0x8fd8ff, 0.9);
-fillLight.position.set(-16, 12, -10);
+fillLight.position.set(-18, 12, -12);
 scene.add(fillLight);
 
 const cyanLight = new THREE.PointLight(0x4fd1ff, 55, 40, 2);
@@ -62,518 +59,425 @@ const goldLight = new THREE.PointLight(0xffb347, 38, 34, 2);
 goldLight.position.set(10, 8, 10);
 scene.add(goldLight);
 
-// ---------- 材质 / 工具 ----------
+// ---------- 材质 ----------
 const goldMat = new THREE.MeshStandardMaterial({ color: 0xb08238, metalness: 0.9, roughness: 0.36 });
 const darkMat = new THREE.MeshStandardMaterial({ color: 0x12161c, metalness: 0.7, roughness: 0.34 });
 const silverMat = new THREE.MeshStandardMaterial({ color: 0xb8bcc4, metalness: 0.95, roughness: 0.22 });
 
 const shadowTex = (() => {
-  const canvas = document.createElement('canvas');
-  canvas.width = 128;
-  canvas.height = 128;
-  const ctx = canvas.getContext('2d');
-  const grad = ctx.createRadialGradient(64, 64, 4, 64, 64, 64);
-  grad.addColorStop(0, 'rgba(0,0,0,0.55)');
-  grad.addColorStop(0.55, 'rgba(0,0,0,0.22)');
-  grad.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, 128, 128);
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  return tex;
+  const c = document.createElement('canvas'); c.width = 128; c.height = 128;
+  const g = c.getContext('2d');
+  const grad = g.createRadialGradient(64, 64, 4, 64, 64, 64);
+  grad.addColorStop(0, 'rgba(0,0,0,0.55)'); grad.addColorStop(0.55, 'rgba(0,0,0,0.22)'); grad.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = grad; g.fillRect(0, 0, 128, 128);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 })();
 
-function addShadow(group, w, d, y, z = 0) {
-  const plane = new THREE.Mesh(
+function addShadow(group, w, d, y) {
+  const m = new THREE.Mesh(
     new THREE.PlaneGeometry(w * 1.2, d * 1.2),
-    new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, opacity: 0.8, depthWrite: false }),
+    new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, opacity: 0.85, depthWrite: false }),
   );
-  plane.rotation.x = -Math.PI / 2;
-  plane.position.set(0, y, z);
-  group.add(plane);
+  m.rotation.x = -Math.PI / 2;
+  m.position.y = y;
+  group.add(m);
 }
-
-function boardTexture(base, trace, silk) {
-  const canvas = document.createElement('canvas');
-  canvas.width = 1024;
-  canvas.height = 1024;
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = base;
-  ctx.fillRect(0, 0, 1024, 1024);
-  let seed = 20261103;
-  const rnd = () => {
-    seed = (seed * 16807) % 2147483647;
-    return seed / 2147483647;
-  };
-  ctx.strokeStyle = 'rgba(255,255,255,0.045)';
-  ctx.lineWidth = 1;
-  for (let i = 0; i <= 1024; i += 32) {
-    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 1024); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(1024, i); ctx.stroke();
-  }
-  for (let n = 0; n < 70; n += 1) {
-    let x = rnd() * 1024;
-    let y = rnd() * 1024;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    for (let s = 0; s < 3; s += 1) {
-      if (rnd() > 0.5) x += rnd() > 0.5 ? 40 + rnd() * 120 : -(40 + rnd() * 120);
-      else y += rnd() > 0.5 ? 40 + rnd() * 120 : -(40 + rnd() * 120);
-      ctx.lineTo(x, y);
-    }
-    ctx.strokeStyle = trace;
-    ctx.lineWidth = 1 + rnd() * 2;
-    ctx.stroke();
-  }
-  for (let n = 0; n < 120; n += 1) {
-    const x = rnd() * 1024;
-    const y = rnd() * 1024;
-    const r = 2 + rnd() * 4;
-    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(201,151,63,0.16)'; ctx.fill();
-    ctx.beginPath(); ctx.arc(x, y, r * 0.45, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(4,16,12,0.8)'; ctx.fill();
-  }
-  ctx.fillStyle = silk;
-  ctx.font = '600 24px "Cascadia Mono", Consolas, monospace';
-  ctx.fillText('EC-S100 · STM32F411CEU6', 40, 956);
-  ctx.font = '500 16px "Cascadia Mono", Consolas, monospace';
-  ctx.fillText('EXPANSION BOARD · REV 2.6', 40, 986);
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = 8;
-  return tex;
-}
-
-// ---------- 场景骨架 ----------
-const floor = new THREE.Mesh(
-  new THREE.PlaneGeometry(220, 220),
-  new THREE.MeshStandardMaterial({ color: 0x040b0f, roughness: 1, metalness: 0 }),
-);
-floor.rotation.x = -Math.PI / 2;
-floor.position.y = -0.03;
-scene.add(floor);
-
-const floorGrid = new THREE.GridHelper(80, 80, 0x0f4a50, 0x0a2a30);
-floorGrid.position.y = 0.01;
-floorGrid.material.transparent = true;
-floorGrid.material.opacity = 0.3;
-scene.add(floorGrid);
-
-const mat = new THREE.Mesh(
-  new THREE.BoxGeometry(34, 0.3, 26),
-  new THREE.MeshStandardMaterial({ color: 0x071014, roughness: 0.9, metalness: 0.1 }),
-);
-mat.position.y = 0.15;
-scene.add(mat);
-
-// 主控板
-const mainBoard = new THREE.Group();
-const mainPcb = new THREE.Mesh(
-  new RoundedBoxGeometry(30, 0.6, 18, 2, 0.08),
-  new THREE.MeshStandardMaterial({ color: 0x0f3c52, roughness: 0.72, metalness: 0.18 }),
-);
-mainPcb.position.y = 0.7;
-mainBoard.add(mainPcb);
-mainPcb.material.color.setHex(0x0f3c52);
-const mainTop = new THREE.Mesh(
-  new THREE.PlaneGeometry(29.4, 17.4),
-  new THREE.MeshStandardMaterial({ map: boardTexture('#0c2b3d', 'rgba(79,209,255,0.22)', 'rgba(160,220,240,0.2)'), roughness: 0.8, metalness: 0.12 }),
-);
-mainTop.rotation.x = -Math.PI / 2;
-mainTop.position.y = 1.005;
-mainBoard.add(mainTop);
-addShadow(mainBoard, 30, 18, 0.38);
-scene.add(mainBoard);
-
-// 四根排针
-for (const x of [-9, 9]) {
-  for (const z of [-4.5, 4.0]) {
-    const header = new THREE.Mesh(new THREE.BoxGeometry(0.9, 2.1, 0.9), darkMat);
-    header.position.set(x, 1.95, z);
-    scene.add(header);
-    for (let i = 0; i < 6; i += 1) {
-      const pin = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.1, 0.12), goldMat);
-      pin.position.set(x - 0.3 + (i % 3) * 0.3, 3.02, z - 0.3 + Math.floor(i / 3) * 0.3);
-      scene.add(pin);
-    }
-  }
-}
-
-// 扩展板 + 屏幕（可插拔）
-const RIG_BASE = 0.35;
-const rig = new THREE.Group();
-rig.position.y = RIG_BASE;
-scene.add(rig);
-
-const expPcb = new THREE.Mesh(
-  new RoundedBoxGeometry(24, 0.5, 13, 2, 0.07),
-  new THREE.MeshStandardMaterial({ color: 0x115039, roughness: 0.72, metalness: 0.18 }),
-);
-expPcb.position.set(0, 2.9, -1);
-rig.add(expPcb);
-const expTop = new THREE.Mesh(
-  new THREE.PlaneGeometry(23.4, 12.4),
-  new THREE.MeshStandardMaterial({ map: boardTexture('#0e3a2b', 'rgba(63,240,200,0.22)', 'rgba(160,240,210,0.2)'), roughness: 0.8, metalness: 0.12 }),
-);
-expTop.rotation.x = -Math.PI / 2;
-expTop.position.set(0, 3.155, -1);
-rig.add(expTop);
-addShadow(rig, 24, 13, 2.6, -1);
-
-// 屏幕模块
-const screenGroup = new THREE.Group();
-screenGroup.position.set(0, 7.7, -6.8);
-const screenPcb = new THREE.Mesh(new RoundedBoxGeometry(7.0, 9.0, 0.5, 2, 0.06), new THREE.MeshStandardMaterial({ color: 0x0a0e12, roughness: 0.5, metalness: 0.5 }));
-screenGroup.add(screenPcb);
-const bezel = new THREE.Mesh(new RoundedBoxGeometry(6.6, 7.6, 0.28, 2, 0.04), new THREE.MeshStandardMaterial({ color: 0x020405, roughness: 0.35, metalness: 0.3 }));
-bezel.position.z = 0.3;
-screenGroup.add(bezel);
-
-const screenCanvas = document.createElement('canvas');
-screenCanvas.width = 240;
-screenCanvas.height = 280;
-const screenCtx = screenCanvas.getContext('2d');
-const screenTex = new THREE.CanvasTexture(screenCanvas);
-screenTex.colorSpace = THREE.SRGBColorSpace;
-screenTex.anisotropy = 8;
-const screenPlane = new THREE.Mesh(
-  new THREE.PlaneGeometry(6.0, 7.0),
-  new THREE.MeshBasicMaterial({ map: screenTex, toneMapped: false }),
-);
-screenPlane.position.z = 0.46;
-screenGroup.add(screenPlane);
-
-// 屏幕排线
-const ribbon = new THREE.Mesh(
-  new THREE.BoxGeometry(2.6, 0.08, 0.06),
-  new THREE.MeshStandardMaterial({ color: 0xb06a2a, metalness: 0.3, roughness: 0.6 }),
-);
-ribbon.position.set(0, -4.5, 0.2);
-screenGroup.add(ribbon);
-rig.add(screenGroup);
-
-// 屏幕模块的立座
-const stand = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.5, 1.2), darkMat);
-stand.position.set(0, 3.25, -6.8);
-rig.add(stand);
-
-// ---------- 器件 ----------
-const pickables = [];
-const partVisuals = new Map();
-const labelEls = new Map();
-const edgeObjects = [];
-const dimStates = new Map();
 
 function rounded(w, h, d, r = 0.04) {
   return new RoundedBoxGeometry(w, h, d, 2, Math.min(r, h / 2));
 }
 
-function makeChip(part) {
-  const [w, h, d] = part.size;
-  const group = new THREE.Group();
-  const bodyMat = new THREE.MeshStandardMaterial({ color: 0x11151b, metalness: 0.7, roughness: 0.34 });
-  const body = new THREE.Mesh(rounded(w, h, d, 0.05), bodyMat);
-  group.add(body);
-  const lidMat = new THREE.MeshStandardMaterial({ color: 0x0b0e12, metalness: 0.85, roughness: 0.24, emissive: part.color, emissiveIntensity: 0.28 });
-  const lid = new THREE.Mesh(rounded(w * 0.8, 0.03, d * 0.78, 0.015), lidMat);
-  lid.position.y = h / 2 + 0.015;
-  group.add(lid);
-  for (let i = 0; i < 3; i += 1) {
-    const x = -w * 0.3 + i * w * 0.3;
-    for (const sign of [-1, 1]) {
-      const pin = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.04, 0.16), goldMat);
-      pin.position.set(x, -h / 2 + 0.02, sign * (d / 2 + 0.05));
+function makeBoardTexture(base, trace, title) {
+  const c = document.createElement('canvas'); c.width = 1024; c.height = 1024;
+  const g = c.getContext('2d');
+  g.fillStyle = base; g.fillRect(0, 0, 1024, 1024);
+  let seed = 20261103;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  g.strokeStyle = 'rgba(255,255,255,0.045)'; g.lineWidth = 1;
+  for (let i = 0; i <= 1024; i += 32) {
+    g.beginPath(); g.moveTo(i, 0); g.lineTo(i, 1024); g.stroke();
+    g.beginPath(); g.moveTo(0, i); g.lineTo(1024, i); g.stroke();
+  }
+  for (let n = 0; n < 90; n += 1) {
+    let x = rnd() * 1024, y = rnd() * 1024;
+    g.beginPath(); g.moveTo(x, y);
+    for (let s = 0; s < 3; s += 1) {
+      if (rnd() > 0.5) x += rnd() > 0.5 ? 40 + rnd() * 140 : -(40 + rnd() * 140);
+      else y += rnd() > 0.5 ? 40 + rnd() * 140 : -(40 + rnd() * 140);
+      g.lineTo(x, y);
+    }
+    g.strokeStyle = trace; g.lineWidth = 1 + rnd() * 2; g.stroke();
+  }
+  for (let n = 0; n < 140; n += 1) {
+    const x = rnd() * 1024, y = rnd() * 1024, r = 2 + rnd() * 4;
+    g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fillStyle = 'rgba(201,151,63,0.16)'; g.fill();
+    g.beginPath(); g.arc(x, y, r * 0.45, 0, Math.PI * 2); g.fillStyle = 'rgba(4,16,12,0.8)'; g.fill();
+  }
+  g.fillStyle = 'rgba(190,240,220,0.22)';
+  g.font = '600 24px "Cascadia Mono", Consolas, monospace';
+  g.fillText(title, 40, 960);
+  g.font = '500 15px "Cascadia Mono", Consolas, monospace';
+  g.fillText('ZET6-STYLE MODULE CARRIER · 2.54mm HEADERS', 40, 990);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
+}
+
+// ---------- 底板 ----------
+const floor = new THREE.Mesh(
+  new THREE.PlaneGeometry(240, 240),
+  new THREE.MeshStandardMaterial({ color: 0x040b0f, roughness: 1, metalness: 0 }),
+);
+floor.rotation.x = -Math.PI / 2; floor.position.y = -0.03; scene.add(floor);
+
+const grid = new THREE.GridHelper(90, 90, 0x0f4a50, 0x0a2a30);
+grid.position.y = 0.01; grid.material.transparent = true; grid.material.opacity = 0.28; scene.add(grid);
+
+const baseBoard = new THREE.Group();
+const basePcb = new THREE.Mesh(rounded(40, 0.6, 28, 0.08), new THREE.MeshStandardMaterial({ color: 0x0f4a36, roughness: 0.72, metalness: 0.16 }));
+basePcb.position.y = 0.7;
+baseBoard.add(basePcb);
+const baseTop = new THREE.Mesh(
+  new THREE.PlaneGeometry(39.4, 27.4),
+  new THREE.MeshStandardMaterial({ map: makeBoardTexture('#0d3d2c', 'rgba(63,240,200,0.18)', 'EC-S100 MODULE CARRIER · V2.6'), roughness: 0.8, metalness: 0.12 }),
+);
+baseTop.rotation.x = -Math.PI / 2; baseTop.position.y = 1.01; baseBoard.add(baseTop);
+addShadow(baseBoard, 40, 28, 0.38);
+scene.add(baseBoard);
+
+const titleCanvas = document.createElement('canvas');
+titleCanvas.width = 1024; titleCanvas.height = 128;
+const tctx = titleCanvas.getContext('2d');
+tctx.clearRect(0, 0, 1024, 128);
+tctx.fillStyle = 'rgba(190,240,220,0.5)';
+tctx.font = '600 54px "Cascadia Mono", Consolas, monospace';
+tctx.fillText('EC-S100 · MODULE LAB', 24, 80);
+const titleTex = new THREE.CanvasTexture(titleCanvas);
+titleTex.colorSpace = THREE.SRGBColorSpace;
+const titlePlane = new THREE.Mesh(new THREE.PlaneGeometry(12, 1.5), new THREE.MeshBasicMaterial({ map: titleTex, transparent: true, opacity: 0.8, depthWrite: false }));
+titlePlane.rotation.x = -Math.PI / 2;
+titlePlane.position.set(-8, 1.02, -12.6);
+baseBoard.add(titlePlane);
+
+// ---------- 模块 ----------
+const moduleGroups = new Map();
+const pickables = [];
+const labels = new Map();
+const edgeObjects = [];
+const pinLabelObjects = [];
+
+function moduleHeaderPos(module) {
+  const [w, , d] = module.size;
+  switch (module.header?.side) {
+    case 'right': return { axis: 'z', x: w / 2 - 0.28, z: 0, len: d * 0.8 };
+    case 'left': return { axis: 'z', x: -w / 2 + 0.28, z: 0, len: d * 0.8 };
+    case 'back': return { axis: 'x', x: 0, z: d / 2 - 0.28, len: w * 0.8 };
+    case 'front': return { axis: 'x', x: 0, z: -d / 2 + 0.28, len: w * 0.8 };
+    default: return { axis: 'x', x: 0, z: 0, len: w * 0.8 };
+  }
+}
+
+function addHeader(group, module) {
+  if (!module.header) return;
+  const [w, h, d] = module.size;
+  const hp = moduleHeaderPos(module);
+  const count = module.header.count;
+  const stripLen = count * 0.55;
+  const strip = new THREE.Mesh(
+    new THREE.BoxGeometry(hp.axis === 'x' ? stripLen : 0.55, 0.18, hp.axis === 'x' ? 0.55 : stripLen),
+    darkMat,
+  );
+  strip.position.set(hp.x, -h / 2 - 0.05, hp.z);
+  group.add(strip);
+
+  for (let i = 0; i < count; i += 1) {
+    const t = count === 1 ? 0 : i / (count - 1) - 0.5;
+    for (let row = 0; row < (module.header.rows || 1); row += 1) {
+      const offset = ((module.header.rows || 1) - 1) * 0.25;
+      const rowOff = row * 0.5 - offset;
+      const pin = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.34, 0.13), goldMat);
+      if (hp.axis === 'x') pin.position.set(t * stripLen * 0.88, -h / 2 - 0.18, hp.z + rowOff);
+      else pin.position.set(hp.x + rowOff, -h / 2 - 0.18, t * stripLen * 0.88);
       group.add(pin);
     }
   }
-  addShadow(group, w, d, -h / 2 - 0.012);
-  const edgeMat = new THREE.LineBasicMaterial({ color: part.color, transparent: true, opacity: 0.45 });
-  const edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w, h, d)), edgeMat);
-  group.add(edges);
-  edgeObjects.push(edges);
-  return { group, bodyMat, lidMat, edgeMat };
 }
 
-function buildPart(part) {
-  if (part.id === 'screen') {
-    const hit = new THREE.Mesh(
-      new THREE.BoxGeometry(part.size[0], part.size[1], part.size[2] + 0.4),
-      new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, colorWrite: false }),
-    );
-    hit.position.set(part.pos[0], part.pos[1], part.pos[2]);
-    hit.userData.partId = part.id;
-    rig.add(hit);
-    pickables.push(hit);
-    partVisuals.set(part.id, {
-      setState: ({ dim = false, selected = false } = {}) => {
-        screenPlane.material.opacity = dim ? 0.5 : 1;
-        screenPlane.material.transparent = true;
-        screenGroup.scale.setScalar(selected ? 1.03 : 1);
-      },
+function addSocket(module) {
+  if (!module.header) return;
+  const hp = moduleHeaderPos(module);
+  const count = module.header.count;
+  const stripLen = count * 0.55;
+  const socket = new THREE.Mesh(
+    new THREE.BoxGeometry(hp.axis === 'x' ? stripLen : 0.65, 0.28, hp.axis === 'x' ? 0.65 : stripLen),
+    darkMat,
+  );
+  socket.position.set(module.pos[0] + hp.x, 0.92, module.pos[2] + hp.z);
+  baseBoard.add(socket);
+  for (let i = 0; i < count; i += 1) {
+    const t = count === 1 ? 0 : i / (count - 1) - 0.5;
+    for (let row = 0; row < (module.header.rows || 1); row += 1) {
+      const offset = ((module.header.rows || 1) - 1) * 0.25;
+      const rowOff = row * 0.5 - offset;
+      const hole = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.05, 8), new THREE.MeshBasicMaterial({ color: 0x05080a }));
+      if (hp.axis === 'x') hole.position.set(module.pos[0] + t * stripLen * 0.88, 1.07, module.pos[2] + hp.z + rowOff);
+      else hole.position.set(module.pos[0] + hp.x + rowOff, 1.07, module.pos[2] + t * stripLen * 0.88);
+      baseBoard.add(hole);
+    }
+  }
+}
+
+function pinTexture(module) {
+  const c = document.createElement('canvas'); c.width = 512; c.height = 384;
+  const g = c.getContext('2d');
+  g.fillStyle = '#071410'; g.fillRect(0, 0, 512, 384);
+  g.strokeStyle = 'rgba(63,240,200,0.12)'; g.lineWidth = 1;
+  for (let i = 0; i <= 512; i += 32) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i, 384); g.stroke(); }
+  g.fillStyle = 'rgba(210,255,240,0.85)';
+  g.font = '600 22px "Microsoft YaHei", sans-serif';
+  g.fillText(module.label, 20, 40);
+  g.fillStyle = 'rgba(63,240,200,0.65)';
+  g.font = '12px "Cascadia Mono", Consolas, monospace';
+  g.fillText(module.meta.slice(0, 36), 20, 62);
+  const hp = moduleHeaderPos(module);
+  const count = module.header?.count || 0;
+  const pinLabels = module.pins.slice(0, count);
+  if (hp.axis === 'z') {
+    const left = hp.x > 0;
+    g.save();
+    g.translate(left ? 500 : 12, 190);
+    g.rotate(left ? -Math.PI / 2 : Math.PI / 2);
+    g.font = '11px "Cascadia Mono", Consolas, monospace';
+    pinLabels.forEach((p, i) => {
+      g.fillStyle = i === 0 ? '#ff8a8a' : i === 1 ? '#d7d7d7' : '#6fe8c8';
+      g.fillText(`${i + 1} ${p[0]}`, i * 42, 0);
     });
-    return;
+    g.restore();
+  } else {
+    g.font = '11px "Cascadia Mono", Consolas, monospace';
+    pinLabels.forEach((p, i) => {
+      g.fillStyle = i === 0 ? '#ff8a8a' : i === 1 ? '#d7d7d7' : '#6fe8c8';
+      g.fillText(`${i + 1} ${p[0]}`, 20 + i * 42, 360);
+    });
+  }
+  g.fillStyle = 'rgba(255,179,71,0.5)';
+  g.font = '10px "Cascadia Mono", Consolas, monospace';
+  g.fillText('2.54mm HEADER', 20, 92);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
+}
+
+function addChip(group, x, y, z, w, h, d, color = 0x12161c, emissive = 0) {
+  const mat = new THREE.MeshStandardMaterial({ color, metalness: 0.7, roughness: 0.34, emissive, emissiveIntensity: emissive ? 0.3 : 0 });
+  const chip = new THREE.Mesh(rounded(w, h, d, 0.03), mat);
+  chip.position.set(x, y, z);
+  group.add(chip);
+  for (let i = 0; i < 3; i += 1) {
+    const px = x - w * 0.3 + i * w * 0.3;
+    for (const sign of [-1, 1]) {
+      const pin = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.03, 0.12), goldMat);
+      pin.position.set(px, y + h / 2 + 0.02, z + sign * (d / 2 + 0.05));
+      group.add(pin);
+    }
+  }
+  return { mat };
+}
+
+function buildCore(module, group) {
+  const [w, h, d] = module.size;
+  const pcbMat = new THREE.MeshStandardMaterial({ color: 0x0f3c52, metalness: 0.2, roughness: 0.7 });
+  group.add(new THREE.Mesh(rounded(w, h, d, 0.06), pcbMat));
+  const top = new THREE.Mesh(new THREE.PlaneGeometry(w - 0.4, d - 0.4), new THREE.MeshStandardMaterial({
+    map: makeBoardTexture('#0c2b3d', 'rgba(79,209,255,0.2)', 'STM32F411 CORE'), roughness: 0.8, metalness: 0.12,
+  }));
+  top.rotation.x = -Math.PI / 2; top.position.y = h / 2 + 0.01; group.add(top);
+
+  addChip(group, -3.5, 0.55, 0, 2.4, 0.36, 2.4, 0x161b22, 0x4f8cff);
+  const usb = new THREE.Mesh(rounded(1.3, 0.4, 1.5, 0.03), silverMat);
+  usb.position.set(7.2, 0.45, 4.2); group.add(usb);
+  for (const [x, z] of [[-6.5, 4.4], [6.2, 4.4]]) {
+    const key = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.28, 0.5), goldMat);
+    key.position.set(x, 0.45, z); group.add(key);
+  }
+  for (const z of [-5.2, 5.2]) {
+    const strip = new THREE.Mesh(new THREE.BoxGeometry(14.5, 0.22, 0.55), darkMat);
+    strip.position.set(0, 0.38, z); group.add(strip);
+    for (let i = 0; i < 20; i += 1) {
+      const pin = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.34, 0.13), goldMat);
+      pin.position.set(-6.8 + i * 0.72, 0.52, z); group.add(pin);
+    }
+  }
+  addShadow(group, w, d, -h / 2 - 0.01);
+  return { pcbMat, setState: ({ dim = false } = {}) => { pcbMat.transparent = dim; pcbMat.opacity = dim ? 0.35 : 1; } };
+}
+
+function buildFlat(module, group) {
+  const [w, h, d] = module.size;
+  const pcbMat = new THREE.MeshStandardMaterial({ color: module.kind === 'bt' ? 0x15506a : 0x145a42, metalness: 0.18, roughness: 0.7 });
+  group.add(new THREE.Mesh(rounded(w, h, d, 0.05), pcbMat));
+  const top = new THREE.Mesh(new THREE.PlaneGeometry(w - 0.35, d - 0.35), new THREE.MeshStandardMaterial({
+    map: pinTexture(module), roughness: 0.8, metalness: 0.1,
+  }));
+  top.rotation.x = -Math.PI / 2; top.position.y = h / 2 + 0.01; group.add(top);
+  addHeader(group, module);
+  addSocket(module);
+
+  if (module.kind === 'sensor') {
+    [-2.4, -1.2, 0, 1.2, 2.4].forEach((x, i) => {
+      addChip(group, x, 0.5, 0, 0.85, 0.26, 0.7, 0x141a20, [0x3ff0c8, 0xff6b8a, 0x60a5fa, 0xffb347, 0x818cf8][i]);
+    });
+  } else if (module.kind === 'storage') {
+    addChip(group, -0.8, 0.5, 0, 1.5, 0.32, 1.1, 0x141a20, 0x4ade80);
+  } else if (module.kind === 'power') {
+    addChip(group, -0.8, 0.5, 0, 1.2, 0.3, 0.9, 0x141a20, 0xfacc15);
+    const bat = new THREE.Mesh(rounded(1.5, 0.4, 0.7, 0.05), new THREE.MeshStandardMaterial({ color: 0xd8dde2, roughness: 0.7 }));
+    bat.position.set(1.2, 0.48, 0); group.add(bat);
+  } else if (module.kind === 'bt') {
+    const sub = new THREE.Mesh(rounded(2.8, 0.2, 1.8, 0.03), new THREE.MeshStandardMaterial({ color: 0x0f3c52, roughness: 0.6 }));
+    sub.position.y = 0.4; group.add(sub);
+    const shield = new THREE.Mesh(rounded(1.5, 0.22, 1.0, 0.02), silverMat);
+    shield.position.set(0, 0.55, 0); group.add(shield);
+  } else if (module.kind === 'audio') {
+    addChip(group, -0.9, 0.5, 0, 1.1, 0.3, 0.9, 0x141a20, 0xc084fc);
+    const motor = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.22, 20), new THREE.MeshStandardMaterial({ color: 0x2b2f36, metalness: 0.8, roughness: 0.3, emissive: 0xff9f43, emissiveIntensity: 0.2 }));
+    motor.position.set(1.4, 0.5, 0); group.add(motor);
+  } else if (module.kind === 'keys') {
+    for (const x of [-1.2, 0.3]) {
+      const key = new THREE.Mesh(rounded(0.65, 0.28, 0.65, 0.04), goldMat);
+      key.position.set(x, 0.48, 0); group.add(key);
+    }
+    const led = new THREE.Mesh(new THREE.SphereGeometry(0.16, 14, 14), new THREE.MeshStandardMaterial({ color: 0xff6b6b, emissive: 0xff3b3b, emissiveIntensity: 0.8 }));
+    led.position.set(1.5, 0.5, 0); group.add(led);
+  }
+  addShadow(group, w, d, -h / 2 - 0.02);
+  return { pcbMat, setState: ({ dim = false } = {}) => { pcbMat.transparent = dim; pcbMat.opacity = dim ? 0.3 : 1; } };
+}
+
+function buildScreen(module, group) {
+  const [w, h] = module.size;
+  const pcbMat = new THREE.MeshStandardMaterial({ color: 0x0a0e12, metalness: 0.5, roughness: 0.5 });
+  group.add(new THREE.Mesh(rounded(w, h, module.size[2], 0.06), pcbMat));
+  const bezel = new THREE.Mesh(rounded(w * 0.9, h * 0.9, 0.2, 0.04), new THREE.MeshStandardMaterial({ color: 0x020405, roughness: 0.35, metalness: 0.3 }));
+  bezel.position.z = 0.3; group.add(bezel);
+  const touch = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.25, 0.5), darkMat);
+  touch.position.set(w * 0.32, -h * 0.32, 0.45); group.add(touch);
+  addHeader(group, module);
+  addSocket(module);
+  addShadow(group, w, module.size[2], -h / 2 - 0.02);
+  return { pcbMat, setState: ({ dim = false } = {}) => { pcbMat.transparent = dim; pcbMat.opacity = dim ? 0.4 : 1; } };
+}
+
+const screenCanvas = document.createElement('canvas');
+screenCanvas.width = 240; screenCanvas.height = 280;
+const screenCtx = screenCanvas.getContext('2d');
+const screenTex = new THREE.CanvasTexture(screenCanvas);
+screenTex.colorSpace = THREE.SRGBColorSpace;
+
+for (const module of MODULES) {
+  const group = new THREE.Group();
+  group.position.set(module.pos[0], module.pos[1], module.pos[2]);
+  scene.add(group);
+
+  let built;
+  if (module.kind === 'core') built = buildCore(module, group);
+  else if (module.kind === 'screen') built = buildScreen(module, group);
+  else built = buildFlat(module, group);
+
+  if (module.kind === 'screen') {
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(6.8, 7.9), new THREE.MeshBasicMaterial({ map: screenTex, toneMapped: false }));
+    plane.position.z = 0.46; group.add(plane);
+    moduleGroups.set(module.id, { group, module, baseY: module.pos[1], offset: 0, target: 0, ...built, screenPlane: plane });
+  } else {
+    moduleGroups.set(module.id, { group, module, baseY: module.pos[1], offset: 0, target: 0, ...built });
   }
 
-  const built = part.id === 'motor'
-    ? (() => {
-        const g = new THREE.Group();
-        const mat = new THREE.MeshStandardMaterial({ color: 0x2b2f36, metalness: 0.8, roughness: 0.3, emissive: part.color, emissiveIntensity: 0.15 });
-        const cylinder = new THREE.Mesh(new THREE.CylinderGeometry(part.size[0] / 2, part.size[0] / 2, part.size[1], 24), mat);
-        g.add(cylinder);
-        const cap = new THREE.Mesh(new THREE.CylinderGeometry(part.size[0] / 2.4, part.size[0] / 2.4, 0.04, 24), goldMat);
-        cap.position.y = part.size[1] / 2 + 0.02;
-        g.add(cap);
-        return { group: g, bodyMat: mat, lidMat: mat, edgeMat: null };
-      })()
-    : part.id === 'bt'
-      ? (() => {
-          const g = new THREE.Group();
-          const pcbMat = new THREE.MeshStandardMaterial({ color: 0x0b2a3a, metalness: 0.3, roughness: 0.6 });
-          const pcb = new THREE.Mesh(rounded(part.size[0], part.size[1], part.size[2], 0.04), pcbMat);
-          g.add(pcb);
-          const shield = new THREE.Mesh(rounded(part.size[0] * 0.62, part.size[1] * 0.55, part.size[2] * 0.66, 0.03), silverMat);
-          shield.position.y = part.size[1] / 2 * 0.3;
-          g.add(shield);
-          return { group: g, bodyMat: pcbMat, lidMat: silverMat, edgeMat: null };
-        })()
-      : part.id === 'usb'
-        ? (() => {
-            const g = new THREE.Group();
-            const body = new THREE.Mesh(rounded(part.size[0], part.size[1], part.size[2], 0.03), silverMat);
-            g.add(body);
-            return { group: g, bodyMat: silverMat, lidMat: silverMat, edgeMat: null };
-          })()
-        : part.id === 'battery'
-          ? (() => {
-              const g = new THREE.Group();
-              const body = new THREE.Mesh(rounded(part.size[0], part.size[1], part.size[2], 0.05), new THREE.MeshStandardMaterial({ color: 0xd8dde2, metalness: 0.2, roughness: 0.7 }));
-              g.add(body);
-              return { group: g, bodyMat: body.material, lidMat: body.material, edgeMat: null };
-            })()
-          : makeChip(part);
-
-  const { group } = built;
-  group.position.set(part.pos[0], part.pos[1], part.pos[2]);
-  const parent = part.group === 'main' ? mainBoard : rig;
-  parent.add(group);
-
   const hit = new THREE.Mesh(
-    new THREE.BoxGeometry(part.size[0] * 1.1, part.size[1] + 0.2, part.size[2] * 1.1),
+    new THREE.BoxGeometry(module.size[0] * 1.05, module.size[1] + 0.3, module.size[2] * 1.05),
     new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, colorWrite: false }),
   );
-  hit.position.set(part.pos[0], part.pos[1], part.pos[2]);
-  hit.userData.partId = part.id;
-  parent.add(hit);
+  hit.position.set(module.pos[0], module.pos[1], module.pos[2]);
+  hit.userData.moduleId = module.id;
+  scene.add(hit);
   pickables.push(hit);
-
-  partVisuals.set(part.id, {
-    setState: ({ dim = false, selected = false, time = 0 } = {}) => {
-      if (built.bodyMat) {
-        built.bodyMat.transparent = dim;
-        built.bodyMat.opacity = dim ? 0.3 : 1;
-      }
-      if (built.lidMat && built.lidMat !== built.bodyMat) {
-        built.lidMat.transparent = dim;
-        built.lidMat.opacity = dim ? 0.4 : 1;
-        built.lidMat.emissiveIntensity = selected ? 0.6 + Math.sin(time * 4) * 0.2 : dim ? 0.08 : 0.28;
-      }
-      if (built.edgeMat) built.edgeMat.opacity = dim ? 0.1 : 0.45;
-      group.scale.setScalar(selected ? 1.06 : 1);
-    },
-  });
-}
-
-const LABEL_OFFSET = {
-  mcu: 0.65, usb: 0.55, key1: 0.45, swd: 0.45,
-  aht21: 0.25, em7028: 1.35, spl06: 0.25, mpu6050: 1.35, lis2mdl: 0.25,
-  w25q: 0.6, hp4570: 0.5, bt: 0.55, wt588: 0.55, motor: 0.55,
-  battery: 1.0, screen: 0.7, touch: 0.4,
-};
-
-PARTS.forEach((part) => {
-  buildPart(part);
 
   const el = document.createElement('div');
   el.className = 'e-label';
-  el.innerHTML = `<span>${part.label}</span><span class="m">${part.meta}</span>`;
-  el.addEventListener('click', () => selectPart(part.id));
+  el.innerHTML = `<span>${module.label}</span><span class="m">${module.meta}</span>`;
+  el.addEventListener('click', () => selectModule(module.id));
   const obj = new CSS2DObject(el);
-  const yOff = part.size[1] / 2 + (LABEL_OFFSET[part.id] ?? 0.5);
-  obj.position.set(part.pos[0], part.pos[1] + yOff, part.pos[2]);
-  (part.group === 'main' ? mainBoard : rig).add(obj);
-  labelEls.set(part.id, el);
-});
-
-// ---------- 数据流 ----------
-const flowMat = new THREE.PointsMaterial({
-  size: 0.16,
-  transparent: true,
-  opacity: 0.9,
-  blending: THREE.AdditiveBlending,
-  depthWrite: false,
-  sizeAttenuation: true,
-});
-
-function polygonCurve(points) {
-  return new THREE.CatmullRomCurve3(points.map((p) => new THREE.Vector3(p[0], p[1], p[2])));
-}
-
-const flows = [
-  {
-    id: 'sensor',
-    color: 0x3ff0c8,
-    curve: polygonCurve([[0, 3.5, 2], [-3, 3.0, 1], [-6, 1.4, 0]]),
-    count: 16,
-    offset: 0,
-  },
-  {
-    id: 'screen',
-    color: 0x4fd1ff,
-    curve: polygonCurve([[-6, 1.4, 0], [-4, 4.5, -2], [0, 6.5, -5.4], [0, 7.5, -5.9]]),
-    count: 16,
-    offset: 0.25,
-  },
-  {
-    id: 'ota-bt',
-    color: 0xffb347,
-    curve: polygonCurve([[-9.5, 3.6, -4], [-8, 2.6, -2], [-6, 1.4, 0]]),
-    count: 12,
-    offset: 0.1,
-  },
-  {
-    id: 'ota-flash',
-    color: 0x4ade80,
-    curve: polygonCurve([[-6, 1.4, 0], [1, 2.4, -1.6], [8.5, 3.6, -2.5]]),
-    count: 12,
-    offset: 0.4,
-  },
-];
-
-flows.forEach((flow) => {
-  const positions = new Float32Array(flow.count * 3);
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  const mat = flowMat.clone();
-  mat.color.setHex(flow.color);
-  const points = new THREE.Points(geo, mat);
-  scene.add(points);
-  flow.points = points;
-  flow.positions = positions;
-  flow.attr = geo.attributes.position;
-});
-
-function updateFlows(t) {
-  flows.forEach((flow) => {
-    const visible = state.plugged && (flow.id.startsWith('ota') ? state.ota.running : true);
-    flow.points.visible = visible;
-    if (!visible) return;
-    for (let i = 0; i < flow.count; i += 1) {
-      const u = (t * 0.16 + flow.offset + i / flow.count) % 1;
-      const p = flow.curve.getPointAt(u);
-      flow.positions[i * 3] = p.x;
-      flow.positions[i * 3 + 1] = p.y;
-      flow.positions[i * 3 + 2] = p.z;
-    }
-    flow.attr.needsUpdate = true;
-  });
+  const yOff = module.kind === 'screen' ? module.size[1] / 2 + 0.8 : module.size[1] / 2 + 0.7;
+  obj.position.set(module.pos[0], module.pos[1] + yOff, module.pos[2]);
+  scene.add(obj);
+  labels.set(module.id, el);
 }
 
 // ---------- 状态 ----------
 const state = {
-  plugged: true,
+  modules: Object.fromEntries(MODULES.map((m) => [m.id, true])),
   page: 'face',
   sensors: { temp: 26.5, humi: 55, pres: 1013, hr: 72, steps: 7200, bat: 86 },
-  ota: { running: false, version: 'V2.6', progress: 0, step: -1 },
+  ota: { running: false, version: 'V2.6', progress: 0 },
   selected: null,
 };
+
+const powerOn = () => state.modules.power;
+const screenOn = () => state.modules.screen && powerOn();
+const sensorOn = () => state.modules.sensor && powerOn();
+const otaOn = () => state.modules.bt && state.modules.storage && powerOn();
 
 let currentChapter = 0;
 let camTween = null;
 
 function flyTo(position, target, duration = 1.2) {
-  camTween = {
-    t: 0,
-    dur: duration,
-    fromPos: camera.position.clone(),
-    toPos: new THREE.Vector3(position[0], position[1], position[2]),
-    fromTarget: controls.target.clone(),
-    toTarget: new THREE.Vector3(target[0], target[1], target[2]),
-  };
+  camTween = { t: 0, dur: duration, fromPos: camera.position.clone(), toPos: new THREE.Vector3(...position), fromTarget: controls.target.clone(), toTarget: new THREE.Vector3(...target) };
   controls.enabled = false;
 }
 
-// ---------- 屏幕纹理 ----------
+// ---------- 3D 屏纹理 ----------
 function drawScreen() {
   const ctx = screenCtx;
-  ctx.fillStyle = '#020608';
-  ctx.fillRect(0, 0, 240, 280);
-
-  if (!state.plugged) {
-    ctx.fillStyle = '#25424a';
-    ctx.font = '600 16px "Cascadia Mono", Consolas, monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('NO SIGNAL', 120, 136);
-    ctx.font = '10px "Cascadia Mono", Consolas, monospace';
-    ctx.fillText('EXPANSION BOARD UNPLUGGED', 120, 158);
-    ctx.textAlign = 'left';
-    screenTex.needsUpdate = true;
-    return;
+  ctx.fillStyle = '#020608'; ctx.fillRect(0, 0, 240, 280);
+  if (!screenOn()) {
+    ctx.fillStyle = '#25424a'; ctx.font = '600 16px "Cascadia Mono", monospace'; ctx.textAlign = 'center';
+    ctx.fillText('NO SIGNAL', 120, 132);
+    ctx.font = '10px "Cascadia Mono", monospace';
+    ctx.fillText(state.modules.power ? 'SCREEN MODULE UNPLUGGED' : 'POWER MODULE UNPLUGGED', 120, 156);
+    ctx.textAlign = 'left'; screenTex.needsUpdate = true; return;
   }
-
-  ctx.fillStyle = '#eafcff';
-  ctx.font = '600 46px "Cascadia Mono", Consolas, monospace';
   const now = new Date();
-  const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-  ctx.fillText(time, 18, 66);
-
-  ctx.fillStyle = '#7fa8b2';
-  ctx.font = '11px "Microsoft YaHei", sans-serif';
+  ctx.fillStyle = '#eafcff'; ctx.font = '600 46px "Cascadia Mono", monospace';
+  ctx.fillText(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`, 18, 66);
+  ctx.fillStyle = '#7fa8b2'; ctx.font = '11px "Microsoft YaHei", sans-serif';
   ctx.fillText('EC-S100 · 演示台', 18, 88);
-
+  const s = state.sensors;
   if (state.page === 'face') {
-    const s = state.sensors;
-    ctx.fillStyle = '#4fd1ff';
-    ctx.font = '600 13px "Cascadia Mono", Consolas, monospace';
-    ctx.fillText(`HR ${Math.round(s.hr)}`, 18, 132);
-    ctx.fillText(`STEP ${s.steps}`, 18, 156);
-    ctx.fillText(`BAT ${Math.round(s.bat)}%`, 18, 180);
-    ctx.fillStyle = '#3ff0c8';
-    ctx.fillRect(18, 200, 204 - (100 - s.bat) * 1.2, 4);
-  } else if (state.page === 'menu') {
-    for (let i = 0; i < 9; i += 1) {
-      const x = 18 + (i % 3) * 70;
-      const y = 112 + Math.floor(i / 3) * 54;
-      ctx.strokeStyle = 'rgba(79,209,255,0.35)';
-      ctx.strokeRect(x, y, 56, 40);
-    }
+    ctx.fillStyle = '#4fd1ff'; ctx.font = '600 13px "Cascadia Mono", monospace';
+    ctx.fillText(`HR ${sensorOn() ? Math.round(s.hr) : '--'}`, 18, 132);
+    ctx.fillText(`STEP ${sensorOn() ? s.steps : '--'}`, 18, 156);
+    ctx.fillText(`BAT ${powerOn() ? Math.round(s.bat) + '%' : '--'}`, 18, 180);
+    ctx.fillStyle = '#3ff0c8'; ctx.fillRect(18, 200, powerOn() ? 204 * (s.bat / 100) : 4, 4);
   } else if (state.page === 'heart') {
-    ctx.fillStyle = '#ff7b8a';
-    ctx.font = '600 40px "Cascadia Mono", Consolas, monospace';
-    ctx.fillText(`${Math.round(state.sensors.hr)}`, 18, 150);
+    ctx.fillStyle = '#ff7b8a'; ctx.font = '600 40px "Cascadia Mono", monospace';
+    ctx.fillText(sensorOn() ? Math.round(s.hr) : '--', 18, 150);
     ctx.font = '11px "Microsoft YaHei", sans-serif';
     ctx.fillText('BPM · 心率', 18, 170);
   } else if (state.page === 'ota') {
-    ctx.fillStyle = '#ffb347';
-    ctx.font = '600 12px "Cascadia Mono", Consolas, monospace';
+    ctx.fillStyle = '#ffb347'; ctx.font = '600 12px "Cascadia Mono", monospace';
     ctx.fillText(`OTA ${state.ota.progress}%`, 18, 132);
-    ctx.fillStyle = 'rgba(79,209,255,0.15)';
-    ctx.fillRect(18, 148, 204, 8);
-    ctx.fillStyle = '#4fd1ff';
-    ctx.fillRect(18, 148, 204 * (state.ota.progress / 100), 8);
+    ctx.fillStyle = 'rgba(79,209,255,0.15)'; ctx.fillRect(18, 148, 204, 8);
+    ctx.fillStyle = '#4fd1ff'; ctx.fillRect(18, 148, 204 * (state.ota.progress / 100), 8);
+  } else if (state.page === 'menu') {
+    for (let i = 0; i < 9; i += 1) {
+      const x = 18 + (i % 3) * 70, y = 112 + Math.floor(i / 3) * 54;
+      ctx.strokeStyle = 'rgba(79,209,255,0.35)'; ctx.strokeRect(x, y, 56, 40);
+    }
   } else {
-    ctx.fillStyle = '#8fb7c0';
-    ctx.font = '13px "Microsoft YaHei", sans-serif';
-    ctx.fillText(PART_MAP[state.page]?.label ?? '页面', 18, 132);
+    ctx.fillStyle = '#8fb7c0'; ctx.font = '13px "Microsoft YaHei", sans-serif';
+    ctx.fillText('PAGE', 18, 132);
   }
-
-  ctx.fillStyle = '#6f969f';
-  ctx.font = '9px "Cascadia Mono", Consolas, monospace';
+  ctx.fillStyle = '#6f969f'; ctx.font = '9px "Cascadia Mono", monospace';
   ctx.fillText('STM32F411 · FREERTOS · LVGL', 18, 262);
   screenTex.needsUpdate = true;
 }
 
-// ---------- HTML 屏幕镜像 ----------
+// ---------- HTML 屏幕 ----------
 const screenEl = document.getElementById('e-screen');
 const pages = [...screenEl.querySelectorAll('.e-page')];
 
@@ -583,43 +487,42 @@ function showPage(page) {
   drawScreen();
 }
 
+function updateOffText() {
+  const el = screenEl.querySelector('.e-off span');
+  if (el) el.textContent = powerOn() ? '屏幕模块未插入' : '电源模块未插入';
+}
+
 function bindSensors() {
   const s = state.sensors;
-  const set = (key, value) => {
-    const els = document.querySelectorAll(`[data-bind="${key}"]`);
-    els.forEach((el) => { el.textContent = value; });
-  };
-  set('time', `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`);
+  const set = (key, value) => document.querySelectorAll(`[data-bind="${key}"]`).forEach((el) => { el.textContent = value; });
   const now = new Date();
-  const week = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][now.getDay()];
-  set('date', `${now.getMonth() + 1}月${now.getDate()}日 ${week}`);
-  set('temp-face', `${s.temp.toFixed(1)}°C`);
-  set('hr-face', String(Math.round(s.hr)));
-  set('steps-face', String(s.steps));
-  set('bat-face', `${Math.round(s.bat)}%`);
-  set('hr-bpm', String(Math.round(s.hr)));
-  set('temp-msg', `${s.temp.toFixed(1)}°C`);
-  set('hr-msg', String(Math.round(s.hr)));
-  set('steps-msg', `${s.steps} ppm`);
-  set('pres-msg', `${Math.round(s.pres)} hPa`);
+  set('time', `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+  set('date', `${now.getMonth() + 1}月${now.getDate()}日 ${['周日', '周一', '周二', '周三', '周四', '周五', '周六'][now.getDay()]}`);
+  const on = sensorOn();
+  set('temp-face', on ? `${s.temp.toFixed(1)}°C` : '--');
+  set('hr-face', on ? String(Math.round(s.hr)) : '--');
+  set('steps-face', on ? String(s.steps) : '--');
+  set('bat-face', powerOn() ? `${Math.round(s.bat)}%` : '--');
+  set('hr-bpm', on ? String(Math.round(s.hr)) : '--');
+  set('temp-msg', on ? `${s.temp.toFixed(1)}°C` : '--');
+  set('hr-msg', on ? String(Math.round(s.hr)) : '--');
+  set('steps-msg', on ? `${s.steps} ppm` : '--');
+  set('pres-msg', on ? `${Math.round(s.pres)} hPa` : '--');
   set('ota-version', state.ota.version);
+  document.querySelectorAll('#sim-temp, #sim-humi, #sim-pres, #sim-hr, #sim-steps, #sim-bat').forEach((el) => { el.disabled = !on; });
+  updateOffText();
   drawScreen();
 }
 
 screenEl.addEventListener('click', (event) => {
   const target = event.target.closest('[data-go]');
-  if (!target || !state.plugged) return;
+  if (!target || !screenOn()) return;
   showPage(target.dataset.go);
 });
-
 document.querySelectorAll('[data-go]').forEach((btn) => {
-  btn.addEventListener('click', (event) => {
-    event.stopPropagation();
-    if (state.plugged) showPage(btn.dataset.go);
-  });
+  btn.addEventListener('click', (event) => { event.stopPropagation(); if (screenOn()) showPage(btn.dataset.go); });
 });
 
-// 传感器滑块
 const sims = [
   ['temp', 'sim-temp', 'out-temp', (v) => v.toFixed(1)],
   ['humi', 'sim-humi', 'out-humi', (v) => String(Math.round(v))],
@@ -628,7 +531,6 @@ const sims = [
   ['steps', 'sim-steps', 'out-steps', (v) => String(Math.round(v))],
   ['bat', 'sim-bat', 'out-bat', (v) => String(Math.round(v))],
 ];
-
 sims.forEach(([key, inputId, outputId, fmt]) => {
   const input = document.getElementById(inputId);
   const output = document.getElementById(outputId);
@@ -639,46 +541,147 @@ sims.forEach(([key, inputId, outputId, fmt]) => {
   });
 });
 
-// 心率测量
 let heartTimer = null;
 document.getElementById('e-start-heart')?.addEventListener('click', () => {
-  if (!state.plugged || heartTimer) return;
+  if (!screenOn() || !sensorOn() || heartTimer) return;
   const note = document.querySelector('[data-page="heart"] .e-note');
   if (note) note.textContent = '检测中… 请保持手指贴合';
   let ticks = 0;
   heartTimer = setInterval(() => {
     ticks += 1;
-    const wobble = 6 * Math.sin(ticks * 1.7) + (ticks % 2 ? 3 : -2);
-    state.sensors.hr = Math.max(45, Math.min(150, state.sensors.hr + wobble));
+    state.sensors.hr = Math.max(45, Math.min(150, state.sensors.hr + 6 * Math.sin(ticks * 1.7) + (ticks % 2 ? 3 : -2)));
     bindSensors();
-    if (ticks > 12) {
-      clearInterval(heartTimer);
-      heartTimer = null;
-      if (note) note.textContent = 'EM7028 · 20ms 采样\n原始 ADC 右移 2 位后进入心跳算法';
-    }
+    if (ticks > 12) { clearInterval(heartTimer); heartTimer = null; if (note) note.textContent = 'EM7028 · 20ms 采样\n原始 ADC 右移 2 位后进入心跳算法'; }
   }, 220);
 });
 
-// ---------- 插拔 ----------
-let rigTargetY = RIG_BASE;
-const plugBtn = document.querySelector('[data-act="plug"]');
+// ---------- 模块列表 / 插拔 ----------
+const moduleList = document.getElementById('e-mod-list');
+const modulePlugBtn = document.getElementById('e-mod-plug');
 
-function setPlugged(plugged) {
-  state.plugged = plugged;
-  rigTargetY = plugged ? RIG_BASE : RIG_BASE + 4.6;
-  plugBtn.textContent = plugged ? '拔出扩展板' : '插入扩展板';
-  plugBtn.classList.toggle('active', !plugged);
-  screenEl.classList.toggle('is-off', !plugged);
-  if (!plugged) {
-    state.ota.running = false;
-    document.getElementById('e-ota-state').textContent = '扩展板未连接';
-    drawScreen();
-  } else {
-    document.getElementById('e-ota-state').textContent = '空闲 · 等待 0x11 0x22 0x33';
-    bindSensors();
+function statusText(id) {
+  if (id === 'core') return '常驻';
+  return state.modules[id] ? '已插入' : '未插入';
+}
+
+function renderModuleList() {
+  moduleList.innerHTML = '';
+  MODULES.forEach((module) => {
+    const row = document.createElement('div');
+    row.className = 'e-mod-row' + (state.selected === module.id ? ' active' : '') + (module.id !== 'core' && !state.modules[module.id] ? ' off' : '');
+    row.dataset.module = module.id;
+    row.innerHTML = `<div class="e-mod-name"><b>${module.label}</b><span>${module.meta}</span></div><span class="e-mod-status">${statusText(module.id)}</span>`;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'e-mod-toggle';
+    btn.textContent = module.id === 'core' ? '—' : (state.modules[module.id] ? '拔出' : '插入');
+    btn.disabled = module.id === 'core';
+    btn.addEventListener('click', (event) => { event.stopPropagation(); toggleModule(module.id); });
+    row.appendChild(btn);
+    row.addEventListener('click', () => selectModule(module.id));
+    moduleList.appendChild(row);
+  });
+}
+
+function updateAllButton() {
+  const ids = MODULES.filter((m) => m.id !== 'core').map((m) => m.id);
+  const allOn = ids.every((id) => state.modules[id]);
+  const btn = document.querySelector('[data-act="plug"]');
+  if (btn) btn.textContent = allOn ? '全部拔出' : '全部插入';
+}
+
+function updatePinLabels(module) {
+  while (pinLabelObjects.length) {
+    const obj = pinLabelObjects.pop();
+    obj.parent?.remove(obj);
+  }
+  if (!module || !module.header) return;
+  const [w, , d] = module.size;
+  const hp = moduleHeaderPos(module);
+  const count = module.header.count;
+  const group = moduleGroups.get(module.id)?.group;
+  if (!group) return;
+  for (let i = 0; i < count; i += 1) {
+    const t = count === 1 ? 0 : i / (count - 1) - 0.5;
+    const el = document.createElement('div');
+    el.className = 'e-pin-label';
+    el.textContent = `${i + 1} ${module.pins[i]?.[0] ?? ''}`;
+    const obj = new CSS2DObject(el);
+    if (module.kind === 'screen') {
+      obj.position.set(t * w * 0.8, -module.size[1] / 2 - 0.3, 0.7);
+    } else if (hp.axis === 'x') {
+      obj.position.set(t * w * 0.8, 0.85, hp.z + (module.header.rows > 1 ? 0.5 : 0.35));
+    } else {
+      obj.position.set(hp.x + (module.header.rows > 1 ? 0.5 : 0.35), 0.85, t * d * 0.8);
+    }
+    group.add(obj);
+    pinLabelObjects.push(obj);
   }
 }
 
+function selectModule(id) {
+  state.selected = id;
+  const module = MODULE_MAP[id];
+  if (!module) return;
+  switchTab('module');
+  document.getElementById('e-mod-detail').hidden = false;
+  document.getElementById('e-mod-title').textContent = module.label;
+  document.getElementById('e-mod-meta').textContent = module.meta;
+  document.getElementById('e-mod-desc').textContent = `${module.what} ${module.does} ${module.how}`;
+  const table = document.getElementById('e-mod-pins');
+  table.innerHTML = '<table><thead><tr><th>#</th><th>引脚</th><th>说明</th></tr></thead><tbody>' +
+    module.pins.map((p, i) => `<tr><td>${i + 1}</td><td>${p[0]}</td><td>${p[1]}</td></tr>`).join('') +
+    '</tbody></table>';
+  modulePlugBtn.disabled = id === 'core';
+  modulePlugBtn.textContent = id === 'core' ? '核心板常驻' : (state.modules[id] ? '拔出模块' : '插入模块');
+  renderModuleList();
+  moduleGroups.forEach((value, mid) => {
+    value.setState?.({ dim: mid !== id });
+    labels.get(mid)?.classList.toggle('hot', mid === id);
+    labels.get(mid)?.classList.toggle('dim', mid !== id);
+  });
+  updatePinLabels(module);
+}
+
+function toggleModule(id) {
+  if (id === 'core') return;
+  state.modules[id] = !state.modules[id];
+  const entry = moduleGroups.get(id);
+  if (entry) entry.target = state.modules[id] ? 0 : 2.4;
+  labels.get(id)?.classList.toggle('dim', !state.modules[id]);
+  if (state.ota.running && !otaOn()) {
+    state.ota.running = false;
+    document.getElementById('e-ota-state').textContent = '缺少模块 · OTA 已中止';
+  }
+  bindSensors();
+  screenEl.classList.toggle('is-off', !screenOn());
+  updateOffText();
+  drawScreen();
+  renderModuleList();
+  updateAllButton();
+  if (state.selected === id) selectModule(id);
+}
+
+function toggleAll() {
+  const ids = MODULES.filter((m) => m.id !== 'core').map((m) => m.id);
+  const allOn = ids.every((id) => state.modules[id]);
+  ids.forEach((id) => {
+    state.modules[id] = !allOn;
+    const entry = moduleGroups.get(id);
+    if (entry) entry.target = allOn ? 2.4 : 0;
+    labels.get(id)?.classList.toggle('dim', allOn);
+  });
+  state.ota.running = false;
+  bindSensors();
+  screenEl.classList.toggle('is-off', !screenOn());
+  updateOffText();
+  drawScreen();
+  renderModuleList();
+  updateAllButton();
+  if (state.selected) selectModule(state.selected);
+}
+
+modulePlugBtn?.addEventListener('click', () => { if (state.selected) toggleModule(state.selected); });
 
 // ---------- OTA ----------
 const otaLog = [...document.querySelectorAll('#e-ota-log li')];
@@ -687,59 +690,46 @@ const otaBar2 = document.getElementById('e-ota-bar-2');
 const otaState = document.getElementById('e-ota-state');
 const otaText = document.querySelector('[data-bind="ota-text"]');
 
-function setOtaProgress(value) {
-  state.ota.progress = Math.round(value);
+function setOtaProgress(v) {
+  state.ota.progress = Math.round(v);
   if (otaBar) otaBar.style.width = `${state.ota.progress}%`;
   if (otaBar2) otaBar2.style.width = `${state.ota.progress}%`;
   drawScreen();
 }
-
 function setOtaStep(index) {
-  otaLog.forEach((li, i) => {
-    li.classList.toggle('done', i < index);
-    li.classList.toggle('active', i === index);
-  });
+  otaLog.forEach((li, i) => { li.classList.toggle('done', i < index); li.classList.toggle('active', i === index); });
 }
 
 function runOta() {
-  if (!state.plugged || state.ota.running) return;
+  if (!otaOn()) { otaState.textContent = '缺少蓝牙 / 存储 / 电源模块'; return; }
+  if (state.ota.running) return;
   state.ota.running = true;
   state.ota.version = 'V2.6';
-  setOtaStep(0);
-  setOtaProgress(0);
+  setOtaStep(0); setOtaProgress(0);
   otaState.textContent = '收到命令 · 等待确认';
   if (otaText) otaText.textContent = '收到 0x11 0x22 0x33，等待确认';
-  bindSensors();
-  showPage('ota');
+  bindSensors(); showPage('ota');
 
   setTimeout(() => {
     if (!state.ota.running) return;
-    setOtaStep(1);
-    otaState.textContent = 'USART1 · YMODEM 接收';
+    setOtaStep(1); otaState.textContent = 'USART1 · YMODEM 接收';
     let p = 0;
     const timer = setInterval(() => {
       if (!state.ota.running) { clearInterval(timer); return; }
-      p = Math.min(100, p + 4);
-      setOtaProgress(p);
+      p = Math.min(100, p + 5); setOtaProgress(p);
       if (otaText) otaText.textContent = `YMODEM 接收 ${p}%`;
       if (p >= 100) {
-        clearInterval(timer);
-        setOtaStep(2);
-        otaState.textContent = '写入 W25Q 外部 Flash';
+        clearInterval(timer); setOtaStep(2); otaState.textContent = '写入 W25Q 外部 Flash';
         let q = 0;
-        const timer2 = setInterval(() => {
-          if (!state.ota.running) { clearInterval(timer2); return; }
-          q = Math.min(100, q + 6);
-          setOtaProgress(q);
+        const t2 = setInterval(() => {
+          if (!state.ota.running) { clearInterval(t2); return; }
+          q = Math.min(100, q + 7); setOtaProgress(q);
           if (otaText) otaText.textContent = `写入 W25Q ${q}%`;
           if (q >= 100) {
-            clearInterval(timer2);
-            setOtaStep(3);
-            otaState.textContent = '写 App 标志区 0x08008000';
+            clearInterval(t2); setOtaStep(3); otaState.textContent = '写 App 标志区 0x08008000';
             setTimeout(() => {
               if (!state.ota.running) return;
-              setOtaStep(4);
-              otaState.textContent = '软复位 · Bootloader 搬运';
+              setOtaStep(4); otaState.textContent = '软复位 · Bootloader 搬运';
               setTimeout(() => {
                 if (!state.ota.running) return;
                 state.ota.running = false;
@@ -749,58 +739,26 @@ function runOta() {
                 otaState.textContent = '完成 · 已升级到 V2.7';
                 if (otaText) otaText.textContent = '升级完成，版本 V2.7';
                 bindSensors();
-              }, 900);
-            }, 800);
+              }, 800);
+            }, 700);
           }
-        }, 90);
+        }, 80);
       }
-    }, 70);
-  }, 900);
+    }, 65);
+  }, 800);
 }
-
 document.getElementById('e-ota-start')?.addEventListener('click', runOta);
 document.getElementById('e-start-ota')?.addEventListener('click', runOta);
 
-// ---------- 面板 / 选项卡 ----------
+// ---------- 选项卡 ----------
 function switchTab(tab) {
-  document.querySelectorAll('#es100-tabs button').forEach((btn) => {
-    btn.classList.toggle('active', btn.dataset.tab === tab);
-  });
-  document.querySelectorAll('.es100-tab').forEach((panel) => {
-    panel.hidden = panel.dataset.panel !== tab;
-  });
+  document.querySelectorAll('#es100-tabs button').forEach((btn) => btn.classList.toggle('active', btn.dataset.tab === tab));
+  document.querySelectorAll('.es100-tab').forEach((panel) => { panel.hidden = panel.dataset.panel !== tab; });
 }
-
 document.getElementById('es100-tabs')?.addEventListener('click', (event) => {
   const btn = event.target.closest('button');
   if (btn) switchTab(btn.dataset.tab);
 });
-
-// ---------- 器件选择 ----------
-function selectPart(id) {
-  const part = PART_MAP[id];
-  if (!part) return;
-  state.selected = id;
-  document.getElementById('e-part-empty').hidden = true;
-  const info = document.getElementById('e-part-info');
-  info.hidden = false;
-  document.getElementById('e-part-title').textContent = part.label;
-  document.getElementById('e-part-meta').textContent = part.meta;
-  document.getElementById('e-part-desc').textContent = `${part.what} ${part.does} ${part.how}`;
-  const tags = document.getElementById('e-part-tags');
-  tags.innerHTML = '';
-  (part.tags || []).forEach((tag) => {
-    const span = document.createElement('span');
-    span.textContent = tag;
-    tags.appendChild(span);
-  });
-  switchTab('part');
-
-  partVisuals.forEach((visual, pid) => {
-    visual.setState({ dim: dimStates.get(pid) ?? false, selected: pid === id, time: 0 });
-    labelEls.get(pid)?.classList.toggle('hot', pid === id);
-  });
-}
 
 // ---------- 章节 ----------
 const chapterNav = document.getElementById('es100-chapters');
@@ -810,8 +768,7 @@ const narration = document.getElementById('es100-narration');
 
 CHAPTERS.forEach((chapter, index) => {
   const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = 'es100-tab-btn';
+  btn.type = 'button'; btn.className = 'es100-tab-btn';
   btn.innerHTML = `<span class="no">${chapter.no}</span>${chapter.title}`;
   btn.addEventListener('click', () => selectChapter(index));
   chapterNav.appendChild(btn);
@@ -820,12 +777,10 @@ CHAPTERS.forEach((chapter, index) => {
 function applyFocus(chapter) {
   const focus = new Set(chapter.focus);
   const all = focus.has('*');
-  PARTS.forEach((part) => {
-    const dim = !all && !focus.has(part.id);
-    dimStates.set(part.id, dim);
-    partVisuals.get(part.id)?.setState({ dim, selected: part.id === state.selected, time: 0 });
-    const el = labelEls.get(part.id);
-    if (el) el.classList.toggle('dim', dim);
+  MODULES.forEach((module) => {
+    const dim = !all && !focus.has(module.id);
+    moduleGroups.get(module.id)?.setState?.({ dim });
+    labels.get(module.id)?.classList.toggle('dim', dim);
   });
 }
 
@@ -835,9 +790,7 @@ function selectChapter(index) {
   chapterNo.textContent = `CHAPTER ${chapter.no} / ${String(CHAPTERS.length).padStart(2, '0')}`;
   chapterTitle.textContent = chapter.title;
   narration.textContent = chapter.narration;
-  document.querySelectorAll('.es100-tab-btn').forEach((btn, i) => {
-    btn.classList.toggle('active', i === currentChapter);
-  });
+  document.querySelectorAll('.es100-tab-btn').forEach((btn, i) => btn.classList.toggle('active', i === currentChapter));
   flyTo(chapter.camera, chapter.target);
   applyFocus(chapter);
 }
@@ -852,26 +805,42 @@ document.querySelector('.es100-rail')?.addEventListener('click', (event) => {
   const btn = event.target.closest('button');
   if (!btn) return;
   const act = btn.dataset.act;
-  if (act === 'labels') {
-    labelsOn = !labelsOn;
-    stage.classList.toggle('no-labels', !labelsOn);
-    btn.classList.toggle('active', labelsOn);
-  }
-  if (act === 'edges') {
-    edgesOn = !edgesOn;
-    edgeObjects.forEach((edge) => { edge.visible = edgesOn; });
-    btn.classList.toggle('active', edgesOn);
-  }
-  if (act === 'plug') setPlugged(!state.plugged);
-  if (act === 'rotate') {
-    controls.autoRotate = !controls.autoRotate;
-    btn.classList.toggle('active', controls.autoRotate);
-  }
-  if (act === 'reset') {
-    const chapter = CHAPTERS[currentChapter];
-    flyTo(chapter.camera, chapter.target, 0.8);
-  }
+  if (act === 'labels') { labelsOn = !labelsOn; stage.classList.toggle('no-labels', !labelsOn); btn.classList.toggle('active', labelsOn); }
+  if (act === 'edges') { edgesOn = !edgesOn; edgeObjects.forEach((e) => { e.visible = edgesOn; }); btn.classList.toggle('active', edgesOn); }
+  if (act === 'plug') toggleAll();
+  if (act === 'rotate') { controls.autoRotate = !controls.autoRotate; btn.classList.toggle('active', controls.autoRotate); }
+  if (act === 'reset') { const chapter = CHAPTERS[currentChapter]; flyTo(chapter.camera, chapter.target, 0.8); }
 });
+
+// ---------- 数据流 ----------
+const flowMat = new THREE.PointsMaterial({ size: 0.15, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true });
+function makeCurve(points) { return new THREE.CatmullRomCurve3(points.map((p) => new THREE.Vector3(...p))); }
+const flows = [
+  { id: 'sensor', color: 0x3ff0c8, curve: makeCurve([[-13, 1.8, 7], [-8, 2.4, 3], [0, 1.8, 0]]), count: 14, deps: ['sensor'] },
+  { id: 'storage', color: 0x4ade80, curve: makeCurve([[-3, 1.8, 10], [-1, 2.2, 4], [0, 1.8, 0]]), count: 12, deps: ['storage'] },
+  { id: 'bt', color: 0xffb347, curve: makeCurve([[14, 1.8, 6], [8, 2.2, 3], [0, 1.8, 0]]), count: 12, deps: ['bt'] },
+  { id: 'screen', color: 0x4fd1ff, curve: makeCurve([[0, 1.8, 0], [0, 3.0, -4], [0, 5.0, -9], [0, 6.0, -10]]), count: 14, deps: ['screen'] },
+];
+flows.forEach((flow) => {
+  const positions = new Float32Array(flow.count * 3);
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  const mat = flowMat.clone(); mat.color.setHex(flow.color);
+  const points = new THREE.Points(geo, mat); scene.add(points);
+  flow.points = points; flow.positions = positions; flow.attr = geo.attributes.position; flow.t = Math.random();
+});
+function updateFlows(dt) {
+  flows.forEach((flow) => {
+    const visible = powerOn() && flow.deps.every((id) => state.modules[id]);
+    flow.points.visible = visible;
+    if (!visible) return;
+    flow.t = (flow.t + dt * 0.18) % 1;
+    for (let i = 0; i < flow.count; i += 1) {
+      const p = flow.curve.getPointAt((flow.t + i / flow.count) % 1);
+      flow.positions[i * 3] = p.x; flow.positions[i * 3 + 1] = p.y; flow.positions[i * 3 + 2] = p.z;
+    }
+    flow.attr.needsUpdate = true;
+  });
+}
 
 // ---------- 拾取 ----------
 const raycaster = new THREE.Raycaster();
@@ -888,46 +857,32 @@ function pick(clientX, clientY) {
 }
 
 function setHover(id) {
-  pickables.forEach((hit) => {
-    const el = labelEls.get(hit.userData.partId);
-    if (el) el.classList.toggle('hot', hit.userData.partId === id);
-  });
+  pickables.forEach((hit) => labels.get(hit.userData.moduleId)?.classList.toggle('hot', hit.userData.moduleId === id));
   renderer.domElement.style.cursor = id ? 'pointer' : 'grab';
 }
-
 renderer.domElement.addEventListener('pointermove', (event) => {
   const hit = pick(event.clientX, event.clientY);
-  setHover(hit ? hit.userData.partId : null);
+  setHover(hit ? hit.userData.moduleId : null);
 });
-
-renderer.domElement.addEventListener('pointerdown', (event) => {
-  pointerDown = { x: event.clientX, y: event.clientY };
-});
-
+renderer.domElement.addEventListener('pointerdown', (event) => { pointerDown = { x: event.clientX, y: event.clientY }; });
 renderer.domElement.addEventListener('pointerup', (event) => {
   if (!pointerDown) return;
-  const dx = event.clientX - pointerDown.x;
-  const dy = event.clientY - pointerDown.y;
+  const dx = event.clientX - pointerDown.x, dy = event.clientY - pointerDown.y;
   pointerDown = null;
   if (Math.hypot(dx, dy) > 6) return;
   const hit = pick(event.clientX, event.clientY);
-  if (hit) selectPart(hit.userData.partId);
+  if (hit) selectModule(hit.userData.moduleId);
 });
 
-// ---------- 尺寸 ----------
+// ---------- 尺寸 / 动画 ----------
 function onResize() {
-  const width = W();
-  const height = H();
-  if (!width || !height) return;
-  camera.aspect = width / height;
-  camera.updateProjectionMatrix();
-  renderer.setSize(width, height);
-  labelRenderer.setSize(width, height);
+  const w = W(), h = H();
+  if (!w || !h) return;
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+  renderer.setSize(w, h); labelRenderer.setSize(w, h);
 }
-const ro = new ResizeObserver(onResize);
-ro.observe(stage);
+const ro = new ResizeObserver(onResize); ro.observe(stage);
 
-// ---------- 动画 ----------
 const clock = new THREE.Clock();
 let elapsed = 0;
 
@@ -942,36 +897,27 @@ function animate() {
     const ease = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
     camera.position.lerpVectors(camTween.fromPos, camTween.toPos, ease);
     controls.target.lerpVectors(camTween.fromTarget, camTween.toTarget, ease);
-    if (k >= 1) {
-      camTween = null;
-      controls.enabled = true;
-    }
+    if (k >= 1) { camTween = null; controls.enabled = true; }
   }
 
-  rig.position.y += (rigTargetY - rig.position.y) * Math.min(1, dt * 5);
+  moduleGroups.forEach((entry) => {
+    if (!entry.module.header) return;
+    entry.offset += (entry.target - entry.offset) * Math.min(1, dt * 6);
+    entry.group.position.y = entry.baseY + entry.offset;
+  });
+
   controls.update();
-  updateFlows(elapsed);
-
-  if (state.selected) {
-    partVisuals.get(state.selected)?.setState({
-      dim: dimStates.get(state.selected) ?? false,
-      selected: true,
-      time: elapsed,
-    });
-  }
-
+  updateFlows(dt);
   renderer.render(scene, camera);
   labelRenderer.render(scene, camera);
 }
 
 // ---------- 启动 ----------
-setInterval(() => {
-  bindSensors();
-}, 1000);
-
+renderModuleList();
+updateAllButton();
 bindSensors();
 selectChapter(0);
 drawScreen();
 renderer.domElement.style.cursor = 'grab';
-window.__ES100 = { state, showPage, drawScreen };
+window.__ES100 = { state, showPage, drawScreen, toggleModule };
 animate();

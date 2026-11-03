@@ -16,7 +16,7 @@ import '../styles/ec-s100.css';
   <aside class="es100-rail" aria-label="场景控制">
     <button type="button" data-act="labels" class="active">标签</button>
     <button type="button" data-act="edges" class="active">描边</button>
-    <button type="button" data-act="plug" class="danger">拔出扩展板</button>
+    <button type="button" data-act="plug" class="danger">全部拔出</button>
     <button type="button" data-act="rotate">自动旋转</button>
     <button type="button" data-act="reset">重置视角</button>
   </aside>
@@ -24,7 +24,7 @@ import '../styles/ec-s100.css';
   <section class="es100-panel">
     <div class="es100-tabs" id="es100-tabs">
       <button type="button" data-tab="screen" class="active">屏幕</button>
-      <button type="button" data-tab="part">器件</button>
+      <button type="button" data-tab="module">模块</button>
       <button type="button" data-tab="sensor">传感器</button>
       <button type="button" data-tab="ota">OTA</button>
     </div>
@@ -124,16 +124,17 @@ import '../styles/ec-s100.css';
             </div>
           </div>
         </div>
-        <p class="es100-hint">点击屏幕里的图标或按钮；UI 尺寸按代码的 240×280。插拔扩展板会断电。</p>
+        <p class="es100-hint">点击屏幕里的图标或按钮；UI 尺寸按代码的 240×280。点模块或排针看引脚。</p>
       </div>
 
-      <div class="es100-tab e-part" data-panel="part" hidden>
-        <div class="e-part-empty" id="e-part-empty">点击 3D 场景里的器件，查看它是什么、做什么、怎么用。</div>
-        <div class="e-part" id="e-part-info" hidden>
-          <h2 id="e-part-title"></h2>
-          <div class="meta" id="e-part-meta"></div>
-          <p id="e-part-desc"></p>
-          <div class="tags" id="e-part-tags"></div>
+      <div class="es100-tab" data-panel="module" hidden>
+        <div class="e-mod-list" id="e-mod-list"></div>
+        <div class="e-mod-detail" id="e-mod-detail" hidden>
+          <h2 id="e-mod-title"></h2>
+          <div class="meta" id="e-mod-meta"></div>
+          <p id="e-mod-desc"></p>
+          <div class="e-pins" id="e-mod-pins"></div>
+          <button class="e-btn" id="e-mod-plug">拔出模块</button>
         </div>
       </div>
 
@@ -146,7 +147,7 @@ import '../styles/ec-s100.css';
           <div class="e-sim-row"><label>步数</label><input type="range" id="sim-steps" min="0" max="20000" step="10" value="7200" /><output id="out-steps">7200</output></div>
           <div class="e-sim-row"><label>电量</label><input type="range" id="sim-bat" min="0" max="100" step="1" value="86" /><output id="out-bat">86</output></div>
         </div>
-        <p class="es100-hint">这些就是传感器输入。屏幕、表盘和 3D 屏会同步变化。</p>
+        <p class="es100-hint">这些就是传感器输入。拔掉传感器模块后输入会失效。</p>
       </div>
 
       <div class="es100-tab" data-panel="ota" hidden>

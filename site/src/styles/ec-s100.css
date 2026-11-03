@@ -710,3 +710,116 @@
   .es100-badge { display: none; }
   .e-screen { transform: scale(0.9); transform-origin: top center; margin-bottom: -28px; }
 }
+
+/* ---------- 模块列表 / 引脚 ---------- */
+.e-mod-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.e-mod-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 8px;
+  border: 1px solid rgba(79, 209, 255, 0.12);
+  border-radius: 6px;
+  background: rgba(79, 209, 255, 0.03);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.e-mod-row:hover { border-color: rgba(79, 209, 255, 0.4); }
+.e-mod-row.active { border-color: var(--e-cyan); background: rgba(79, 209, 255, 0.08); }
+.e-mod-row.off { opacity: 0.55; }
+
+.e-mod-name {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.e-mod-name b {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: #dff7ff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.e-mod-name span {
+  font-family: var(--e-mono);
+  font-size: 8px;
+  color: var(--e-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.e-mod-status {
+  font-family: var(--e-mono);
+  font-size: 8px;
+  color: var(--e-teal);
+  white-space: nowrap;
+}
+
+.e-mod-toggle {
+  appearance: none;
+  border: 1px solid rgba(79, 209, 255, 0.2);
+  background: transparent;
+  color: var(--e-dim);
+  font-size: 9px;
+  padding: 3px 5px;
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.e-mod-toggle:hover { color: var(--e-ink); border-color: var(--e-cyan); }
+.e-mod-toggle:disabled { opacity: 0.35; cursor: default; }
+
+.e-mod-detail {
+  border-top: 1px dashed rgba(79, 209, 255, 0.16);
+  padding-top: 10px;
+}
+
+.e-mod-detail h2 { font-size: 16px; margin-bottom: 2px; }
+.e-mod-detail .meta { font-family: var(--e-mono); font-size: 9px; color: var(--e-cyan); margin-bottom: 8px; }
+.e-mod-detail p { font-size: 11px; line-height: 1.7; color: #a9c7c0; margin-bottom: 8px; }
+
+.e-pins table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--e-mono);
+  font-size: 8.5px;
+  margin-bottom: 8px;
+}
+
+.e-pins th,
+.e-pins td {
+  text-align: left;
+  padding: 3px 4px;
+  border-bottom: 1px solid rgba(79, 209, 255, 0.1);
+}
+
+.e-pins th { color: var(--e-dim); font-weight: 400; }
+.e-pins td:first-child { color: var(--e-dim); width: 22px; }
+.e-pins td:nth-child(2) { color: var(--e-cyan); }
+.e-pins td:nth-child(3) { color: #9dbec6; }
+
+.e-pin-label {
+  pointer-events: none;
+  font-family: var(--e-mono);
+  font-size: 8.5px;
+  color: #ffd9a0;
+  background: rgba(8, 16, 14, 0.82);
+  border-left: 1px solid var(--e-gold);
+  padding: 1px 3px;
+  white-space: nowrap;
+  border-radius: 1px;
+}
