@@ -6,7 +6,7 @@ import { getCollection } from 'astro:content';
 import { formatDate } from '../utils/date';
 import { shareCount } from '../data/shares';
 
-type Section = 'articles' | 'share' | 'learning';
+type Section = 'articles' | 'share' | 'learning' | 'models';
 
 interface Props {
   title?: string;
@@ -14,6 +14,7 @@ interface Props {
   currentId?: string;
   section?: Section;
   meta?: string;
+  bare?: boolean;
 }
 
 const {
@@ -22,6 +23,7 @@ const {
   currentId,
   section = 'articles',
   meta,
+  bare = false,
 } = Astro.props;
 
 const posts = (await getCollection('posts', ({ data }) => !data.draft)).sort(
@@ -33,6 +35,8 @@ const headerMeta =
   meta ??
   (section === 'share'
     ? `${shareCount} 个分享`
+    : section === 'models'
+    ? '1 个模型'
     : latest
       ? `${posts.length} 篇 · 最后更新 ${formatDate(latest.data.date)}`
       : '还没有文章');
@@ -54,7 +58,7 @@ const pageTitle = title ? `${title} · CAIRN` : 'CAIRN · 一路走，一路堆�
       document.documentElement.classList.add('js');
     </script>
   </head>
-  <body>
+  <body class={`section-${section}`}>
     <header class="site-header">
       <div class="header-inner">
         <div class="header-brand">
@@ -84,31 +88,42 @@ const pageTitle = title ? `${title} · CAIRN` : 'CAIRN · 一路走，一路堆�
           >
             学习
           </a>
+          <a
+            class:list={['section-link', { active: section === 'models' }]}
+            href="/models/"
+            aria-current={section === 'models' ? 'page' : undefined}
+          >
+            物理模型
+          </a>
         </nav>
 
         <span class="header-meta">{headerMeta}</span>
       </div>
     </header>
 
-    <div class="shell">
-      {
-        Astro.slots.has('sidebar') ? (
-          <slot name="sidebar" />
-        ) : section === 'share' ? (
-          <ShareSidebar />
-        ) : (
-          <Sidebar posts={posts} currentId={currentId} />
-        )
-      }
+    {
+      bare ? (
+        <slot />
+      ) : (
+        <div class="shell">
+          {Astro.slots.has('sidebar') ? (
+            <slot name="sidebar" />
+          ) : section === 'share' ? (
+            <ShareSidebar />
+          ) : (
+            <Sidebar posts={posts} currentId={currentId} />
+          )}
 
-      <div class="content">
-        <main>
-          <slot />
-        </main>
-        <footer class="site-footer">
-          <span>© {new Date().getFullYear()} CAIRN</span>
-        </footer>
-      </div>
-    </div>
+          <div class="content">
+            <main>
+              <slot />
+            </main>
+            <footer class="site-footer">
+              <span>© {new Date().getFullYear()} CAIRN</span>
+            </footer>
+          </div>
+        </div>
+      )
+    }
   </body>
 </html>

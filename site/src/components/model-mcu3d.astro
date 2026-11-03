@@ -1,0 +1,85 @@
+---
+import '../styles/mcu-3d.css';
+---
+
+<section class="mcu-stage" id="mcu-stage" aria-label="STM32 系统结构三维模型">
+  <div id="viewport"></div>
+
+  <header class="hud-top">
+    <div class="brand"><span class="brand-mark">◈</span>ATLAS<span class="brand-sep">/</span>01</div>
+    <div class="headline">STM32 系统结构解剖</div>
+    <div class="chip-badge">STM32F103C8T6 · Cortex-M3 · 72MHz</div>
+  </header>
+
+  <nav class="chapters" id="chapters" aria-label="章节"></nav>
+
+  <aside class="rail" id="rail" aria-label="显示选项">
+    <button type="button" data-toggle="labels" class="active">标签</button>
+    <button type="button" data-toggle="edges" class="active">描边</button>
+    <button type="button" data-toggle="bloom" class="active">Bloom</button>
+    <button type="button" data-toggle="rotate">自动旋转</button>
+    <button type="button" data-action="reset">重置视角</button>
+  </aside>
+
+  <section class="panel" id="panel" aria-live="polite">
+    <div class="panel-kicker">INSPECTOR</div>
+    <h2 id="panel-title">芯片剖面</h2>
+    <div class="panel-meta" id="panel-meta">CHAPTER 01</div>
+    <p id="panel-desc"></p>
+    <div class="panel-tags" id="panel-tags"></div>
+    <div class="panel-extra" id="panel-extra" hidden></div>
+    <div class="panel-hint">点击场景中的任意模块查看说明；拖动旋转，滚轮缩放。</div>
+  </section>
+
+  <footer class="hud-bottom">
+    <div class="chapter-info">
+      <div class="chapter-no" id="chapter-no">CHAPTER 01 / 06</div>
+      <div class="chapter-title" id="chapter-title">芯片剖面</div>
+    </div>
+    <p class="narration" id="narration"></p>
+    <div class="nav-buttons">
+      <button type="button" id="prev">← 上一章</button>
+      <button type="button" id="next">下一章 →</button>
+    </div>
+    <div class="flows" id="flows"></div>
+  </footer>
+
+  <div id="error-overlay" hidden>
+    <div class="error-card">
+      <h2>场景没能启动</h2>
+      <pre id="error-text"></pre>
+    </div>
+  </div>
+</section>
+
+<script is:inline>
+  window.addEventListener('error', function (e) {
+    var box = document.getElementById('error-overlay');
+    var text = document.getElementById('error-text');
+    if (!box || box.hidden === false) return;
+    text.textContent = (e.message || 'Unknown error') + '\n' + (e.filename || '') + ':' + (e.lineno || '');
+    box.hidden = false;
+  });
+  window.addEventListener('unhandledrejection', function (e) {
+    var box = document.getElementById('error-overlay');
+    var text = document.getElementById('error-text');
+    if (!box || box.hidden === false) return;
+    text.textContent = String((e.reason && e.reason.stack) || e.reason || 'Unknown rejection');
+    box.hidden = false;
+  });
+  setTimeout(function () {
+    if (window.__MCU3D_READY) return;
+    var box = document.getElementById('error-overlay');
+    var text = document.getElementById('error-text');
+    if (!box || !box.hidden) return;
+    text.textContent =
+      '3 秒内没有完成初始化。\n' +
+      '请检查 site\\node_modules\\three 是否已安装，或刷新页面重试。\n' +
+      '开发时运行：cd site && npm run dev';
+    box.hidden = false;
+  }, 3000);
+</script>
+
+<script>
+  import '../scripts/mcu-3d/main.js';
+</script>

@@ -7,9 +7,10 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { BLOCKS, BLOCK_MAP, CHAPTERS, FLOWS } from './content.js';
 
+const stage = document.getElementById('mcu-stage');
 const viewport = document.getElementById('viewport');
-const W = () => window.innerWidth;
-const H = () => window.innerHeight;
+const W = () => stage.clientWidth;
+const H = () => stage.clientHeight;
 
 // ---------- 渲染器 ----------
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -557,7 +558,7 @@ rail.addEventListener('click', (event) => {
 
   if (btn.dataset.toggle === 'labels') {
     labelsOn = !labelsOn;
-    document.body.classList.toggle('no-labels', !labelsOn);
+    stage.classList.toggle('no-labels', !labelsOn);
     btn.classList.toggle('active', labelsOn);
   }
   if (btn.dataset.toggle === 'edges') {
@@ -662,13 +663,17 @@ composer.addPass(new OutputPass());
 
 // ---------- 尺寸 ----------
 function onResize() {
-  camera.aspect = W() / H();
+  const width = W();
+  const height = H();
+  if (width === 0 || height === 0) return;
+  camera.aspect = width / height;
   camera.updateProjectionMatrix();
-  renderer.setSize(W(), H());
-  labelRenderer.setSize(W(), H());
-  composer.setSize(W(), H());
+  renderer.setSize(width, height);
+  labelRenderer.setSize(width, height);
+  composer.setSize(width, height);
 }
-window.addEventListener('resize', onResize);
+const resizeObserver = new ResizeObserver(onResize);
+resizeObserver.observe(stage);
 
 // ---------- 动画 ----------
 const clock = new THREE.Clock();
@@ -732,6 +737,7 @@ function animate() {
 }
 
 // ---------- 启动 ----------
+window.__MCU3D_DEBUG = { THREE, renderer, scene, camera, stage, composer, bloomPass };
 const hashNo = location.hash.replace('#', '');
 const hashIndex = CHAPTERS.findIndex((chapter) => chapter.no === hashNo);
 selectChapter(hashIndex >= 0 ? hashIndex : 0, false);
