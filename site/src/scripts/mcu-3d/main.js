@@ -5,7 +5,9 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { BLOCKS, BLOCK_MAP, CHAPTERS, FLOWS } from './content.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { BLOCKS, BLOCK_MAP, CHAPTERS, FLOWS, TRACES } from './content.js';
+import { buildModule, buildTrace, PolylineCurve, createPcbTexture, createDieTexture } from './geometry.js';
 
 const stage = document.getElementById('mcu-stage');
 const viewport = document.getElementById('viewport');
@@ -18,7 +20,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(W(), H());
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.05;
+renderer.toneMappingExposure = 1.0;
 viewport.appendChild(renderer.domElement);
 
 const labelRenderer = new CSS2DRenderer();
@@ -30,59 +32,67 @@ viewport.appendChild(labelRenderer.domElement);
 // ---------- 场景 ----------
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x03080c);
-scene.fog = new THREE.FogExp2(0x03080c, 0.012);
+scene.fog = new THREE.FogExp2(0x03080c, 0.01);
 
-const camera = new THREE.PerspectiveCamera(42, W() / H(), 0.1, 260);
-camera.position.set(15, 13, 16);
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.55;
+
+const camera = new THREE.PerspectiveCamera(40, W() / H(), 0.1, 300);
+camera.position.set(18, 20, 24);
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(0, 4, 0.5);
+controls.target.set(0, 1.6, 0);
 controls.enableDamping = true;
 controls.dampingFactor = 0.06;
-controls.minDistance = 7;
-controls.maxDistance = 46;
+controls.minDistance = 9;
+controls.maxDistance = 65;
 controls.maxPolarAngle = Math.PI * 0.49;
-controls.autoRotateSpeed = 0.55;
+controls.autoRotateSpeed = 0.5;
 controls.update();
 
 // ---------- 灯光 ----------
-scene.add(new THREE.HemisphereLight(0x9ffbe5, 0x04131a, 0.85));
-scene.add(new THREE.AmbientLight(0x4f7f8a, 0.5));
+scene.add(new THREE.HemisphereLight(0xa8fff0, 0x051018, 0.9));
+scene.add(new THREE.AmbientLight(0x5f8f9a, 0.35));
 
-const keyLight = new THREE.DirectionalLight(0xffffff, 2.1);
-keyLight.position.set(12, 20, 10);
+const keyLight = new THREE.DirectionalLight(0xfff6e8, 2.2);
+keyLight.position.set(14, 24, 12);
 scene.add(keyLight);
 
-const tealLight = new THREE.PointLight(0x3ff0c8, 60, 28, 2);
-tealLight.position.set(-8, 9, -5);
+const fillLight = new THREE.DirectionalLight(0x8fd8ff, 0.8);
+fillLight.position.set(-16, 12, -10);
+scene.add(fillLight);
+
+const tealLight = new THREE.PointLight(0x3ff0c8, 30, 40, 2);
+tealLight.position.set(-12, 10, -8);
 scene.add(tealLight);
 
-const goldLight = new THREE.PointLight(0xffb347, 42, 24, 2);
-goldLight.position.set(7, 7, 7);
+const goldLight = new THREE.PointLight(0xffb347, 22, 34, 2);
+goldLight.position.set(10, 8, 10);
 scene.add(goldLight);
 
-const rimLight = new THREE.PointLight(0x4f7bff, 30, 30, 2);
-rimLight.position.set(0, 6, -10);
+const rimLight = new THREE.PointLight(0x4f7bff, 24, 42, 2);
+rimLight.position.set(0, 8, -14);
 scene.add(rimLight);
 
-// ---------- 地面 / 台面 ----------
+// ---------- 地面 / PCB ----------
 const floor = new THREE.Mesh(
-  new THREE.PlaneGeometry(240, 240),
+  new THREE.PlaneGeometry(260, 260),
   new THREE.MeshStandardMaterial({ color: 0x040b0f, roughness: 1, metalness: 0 }),
 );
 floor.rotation.x = -Math.PI / 2;
 floor.position.y = -0.03;
 scene.add(floor);
 
-const floorGrid = new THREE.GridHelper(80, 80, 0x0f4a40, 0x0a2a26);
+const floorGrid = new THREE.GridHelper(90, 90, 0x0f4a40, 0x0a2a26);
 floorGrid.position.y = 0.01;
 floorGrid.material.transparent = true;
-floorGrid.material.opacity = 0.35;
+floorGrid.material.opacity = 0.3;
 scene.add(floorGrid);
 
 const board = new THREE.Mesh(
-  new THREE.BoxGeometry(28, 0.6, 20),
-  new THREE.MeshStandardMaterial({ color: 0x0a3226, roughness: 0.78, metalness: 0.18 }),
+  new THREE.BoxGeometry(30, 0.6, 21),
+  new THREE.MeshStandardMaterial({ color: 0x092a20, roughness: 0.72, metalness: 0.18 }),
 );
 board.position.y = 0.3;
 scene.add(board);
@@ -94,28 +104,45 @@ const boardEdges = new THREE.LineSegments(
 boardEdges.position.copy(board.position);
 scene.add(boardEdges);
 
-const boardGrid = new THREE.GridHelper(26, 26, 0x1b6b55, 0x134a3d);
-boardGrid.position.y = 0.62;
-boardGrid.material.transparent = true;
-boardGrid.material.opacity = 0.28;
-scene.add(boardGrid);
+const pcbTop = new THREE.Mesh(
+  new THREE.PlaneGeometry(29.6, 20.6),
+  new THREE.MeshStandardMaterial({ map: createPcbTexture(), roughness: 0.78, metalness: 0.12 }),
+);
+pcbTop.rotation.x = -Math.PI / 2;
+pcbTop.position.y = 0.605;
+scene.add(pcbTop);
+
+// 固定螺丝
+const screwMat = new THREE.MeshStandardMaterial({ color: 0xb08a4a, metalness: 0.95, roughness: 0.3 });
+const slotMat = new THREE.MeshBasicMaterial({ color: 0x1a1408 });
+for (const x of [-14.2, 14.2]) {
+  for (const z of [-9.7, 9.7]) {
+    const screw = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.1, 20), screwMat);
+    screw.position.set(x, 0.62, z);
+    scene.add(screw);
+    const slot = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.02, 0.08), slotMat);
+    slot.position.set(x, 0.675, z);
+    slot.rotation.y = Math.PI / 4;
+    scene.add(slot);
+  }
+}
 
 // 扫描环
 const scanRing = new THREE.Mesh(
-  new THREE.TorusGeometry(8.4, 0.018, 6, 120),
-  new THREE.MeshBasicMaterial({ color: 0x3ff0c8, transparent: true, opacity: 0.28, blending: THREE.AdditiveBlending, depthWrite: false }),
+  new THREE.TorusGeometry(13.6, 0.02, 6, 160),
+  new THREE.MeshBasicMaterial({ color: 0x3ff0c8, transparent: true, opacity: 0.24, blending: THREE.AdditiveBlending, depthWrite: false }),
 );
 scanRing.rotation.x = Math.PI / 2;
 scanRing.position.y = 0.66;
 scene.add(scanRing);
 
-// ---------- LQFP-48 封装 ----------
+// ---------- 封装 / 晶圆 ----------
 const packageGroup = new THREE.Group();
 const packageBody = new THREE.Mesh(
-  new THREE.BoxGeometry(10.6, 0.9, 10.6),
-  new THREE.MeshStandardMaterial({ color: 0x0a0e12, roughness: 0.52, metalness: 0.5 }),
+  new THREE.BoxGeometry(24, 0.8, 16.5),
+  new THREE.MeshStandardMaterial({ color: 0x0a0e12, roughness: 0.52, metalness: 0.55 }),
 );
-packageBody.position.y = 1.15;
+packageBody.position.y = 0.95;
 packageGroup.add(packageBody);
 
 const packageEdges = new THREE.LineSegments(
@@ -125,85 +152,125 @@ const packageEdges = new THREE.LineSegments(
 packageEdges.position.copy(packageBody.position);
 packageGroup.add(packageEdges);
 
-const pinMat = new THREE.MeshStandardMaterial({ color: 0xb08a4a, metalness: 0.9, roughness: 0.35, emissive: 0x2a1b08, emissiveIntensity: 0.4 });
-const pinGeoX = new THREE.BoxGeometry(0.34, 0.1, 0.52);
-const pinGeoZ = new THREE.BoxGeometry(0.52, 0.1, 0.34);
-for (let i = 0; i < 12; i += 1) {
-  const t = -4.29 + i * 0.78;
-  const a = new THREE.Mesh(pinGeoX, pinMat);
-  a.position.set(t, 0.98, 5.62);
+const pinMat = new THREE.MeshStandardMaterial({ color: 0xc9973f, metalness: 0.95, roughness: 0.28 });
+const pinGeoZ = new THREE.BoxGeometry(0.28, 0.08, 0.46);
+const pinGeoX = new THREE.BoxGeometry(0.46, 0.08, 0.28);
+for (let i = 0; i < 14; i += 1) {
+  const t = -10.8 + i * 1.66;
+  const a = new THREE.Mesh(pinGeoZ, pinMat);
+  a.position.set(t, 0.95, 8.55);
   packageGroup.add(a);
-  const b = new THREE.Mesh(pinGeoX, pinMat);
-  b.position.set(t, 0.98, -5.62);
+  const b = new THREE.Mesh(pinGeoZ, pinMat);
+  b.position.set(t, 0.95, -8.55);
   packageGroup.add(b);
-  const c = new THREE.Mesh(pinGeoZ, pinMat);
-  c.position.set(5.62, 0.98, t);
+}
+for (let i = 0; i < 10; i += 1) {
+  const t = -6.6 + i * 1.46;
+  const c = new THREE.Mesh(pinGeoX, pinMat);
+  c.position.set(12.3, 0.95, t);
   packageGroup.add(c);
-  const d = new THREE.Mesh(pinGeoZ, pinMat);
-  d.position.set(-5.62, 0.98, t);
+  const d = new THREE.Mesh(pinGeoX, pinMat);
+  d.position.set(-12.3, 0.95, t);
   packageGroup.add(d);
 }
 scene.add(packageGroup);
 
 const dieBase = new THREE.Mesh(
-  new THREE.BoxGeometry(9.2, 0.16, 9.2),
-  new THREE.MeshStandardMaterial({ color: 0x0d2a33, metalness: 0.6, roughness: 0.4, emissive: 0x0a3f47, emissiveIntensity: 0.35 }),
+  new THREE.BoxGeometry(21.5, 0.12, 14.5),
+  new THREE.MeshStandardMaterial({ color: 0x0e2530, metalness: 0.65, roughness: 0.38, emissive: 0x0a2f38, emissiveIntensity: 0.35 }),
 );
-dieBase.position.y = 1.68;
+dieBase.position.y = 1.35;
 scene.add(dieBase);
+
+const dieTop = new THREE.Mesh(
+  new THREE.PlaneGeometry(21.2, 14.2),
+  new THREE.MeshBasicMaterial({ map: createDieTexture(), transparent: true, opacity: 0.9, depthWrite: false }),
+);
+dieTop.rotation.x = -Math.PI / 2;
+dieTop.position.y = 1.416;
+scene.add(dieTop);
+
+const dieFrame = new THREE.LineSegments(
+  new THREE.EdgesGeometry(dieBase.geometry),
+  new THREE.LineBasicMaterial({ color: 0x2f8f78, transparent: true, opacity: 0.55 }),
+);
+dieFrame.position.copy(dieBase.position);
+scene.add(dieFrame);
+
+// 键合线：晶圆焊盘 → 封装引脚
+const bondMat = new THREE.LineBasicMaterial({ color: 0xc9973f, transparent: true, opacity: 0.42 });
+function addBond(from, to) {
+  const mid = from.clone().add(to).multiplyScalar(0.5);
+  mid.y += 0.22;
+  const curve = new THREE.CatmullRomCurve3([from, mid, to]);
+  const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(curve.getPoints(14)), bondMat);
+  scene.add(line);
+}
+for (let i = 0; i < 14; i += 1) {
+  const x = -10.8 + i * 1.66;
+  const dieX = x * 0.9;
+  addBond(new THREE.Vector3(dieX, 1.42, 6.9), new THREE.Vector3(x, 1.0, 8.55));
+  addBond(new THREE.Vector3(dieX, 1.42, -6.9), new THREE.Vector3(x, 1.0, -8.55));
+}
+for (let i = 0; i < 10; i += 1) {
+  const z = -6.6 + i * 1.46;
+  const dieZ = z * 0.9;
+  addBond(new THREE.Vector3(10.5, 1.42, dieZ), new THREE.Vector3(12.3, 1.0, z));
+  addBond(new THREE.Vector3(-10.5, 1.42, dieZ), new THREE.Vector3(-12.3, 1.0, z));
+}
+
+// 晶圆边缘焊盘
+for (let i = 0; i < 20; i += 1) {
+  const x = -9.8 + (i / 19) * 19.6;
+  for (const sign of [-1, 1]) {
+    const pad = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.015, 0.36), pinMat);
+    pad.position.set(x, 1.415, sign * 6.9);
+    scene.add(pad);
+  }
+}
+for (let i = 0; i < 12; i += 1) {
+  const z = -6.1 + (i / 11) * 12.2;
+  for (const sign of [-1, 1]) {
+    const pad = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.015, 0.2), pinMat);
+    pad.position.set(sign * 10.5, 1.415, z);
+    scene.add(pad);
+  }
+}
 
 // 玻璃罩
 const glass = new THREE.Mesh(
-  new THREE.BoxGeometry(12.8, 4.8, 12.8),
-  new THREE.MeshBasicMaterial({ color: 0x3ff0c8, transparent: true, opacity: 0.028, side: THREE.DoubleSide, depthWrite: false }),
+  new THREE.BoxGeometry(25.5, 5.2, 18),
+  new THREE.MeshBasicMaterial({ color: 0x3ff0c8, transparent: true, opacity: 0.025, side: THREE.DoubleSide, depthWrite: false }),
 );
-glass.position.y = 3.7;
+glass.position.y = 4.2;
 scene.add(glass);
 
 const glassEdges = new THREE.LineSegments(
   new THREE.EdgesGeometry(glass.geometry),
-  new THREE.LineBasicMaterial({ color: 0x2fd9bd, transparent: true, opacity: 0.2 }),
+  new THREE.LineBasicMaterial({ color: 0x2fd9bd, transparent: true, opacity: 0.18 }),
 );
 glassEdges.position.copy(glass.position);
 scene.add(glassEdges);
 
 // ---------- 模块 ----------
-const blockMeshes = new Map();
+const blockHits = new Map();
+const blockMeshList = [];
+const moduleVisuals = new Map();
 const edgeObjects = [];
 const labelObjects = new Map();
-const blockMeshList = [];
+const dimStates = new Map();
 
 const APB2_IDS = ['gpioa', 'gpiob', 'gpioc', 'adc1', 'adc2', 'tim1', 'spi1', 'usart1', 'exti'];
 const APB1_IDS = ['tim2', 'usart2', 'i2c', 'spi2', 'can', 'usb', 'rtc', 'iwdg'];
 
 function addBlock(spec) {
-  const geo = new THREE.BoxGeometry(spec.size[0], spec.size[1], spec.size[2]);
-  const mat = new THREE.MeshStandardMaterial({
-    color: spec.color,
-    emissive: spec.color,
-    emissiveIntensity: spec.ghost ? 0.05 : 0.22,
-    metalness: 0.5,
-    roughness: 0.34,
-    transparent: true,
-    opacity: spec.ghost ? 0.3 : 0.94,
-  });
-  const mesh = new THREE.Mesh(geo, mat);
-  mesh.position.set(spec.pos[0], spec.pos[1], spec.pos[2]);
-  mesh.userData.spec = spec;
-  scene.add(mesh);
-  blockMeshes.set(spec.id, mesh);
-  blockMeshList.push(mesh);
-
-  const edges = new THREE.LineSegments(
-    new THREE.EdgesGeometry(geo),
-    new THREE.LineBasicMaterial({
-      color: spec.ghost ? 0x48616b : 0xa5fff0,
-      transparent: true,
-      opacity: spec.ghost ? 0.4 : 0.45,
-    }),
-  );
-  mesh.add(edges);
-  edgeObjects.push(edges);
+  const built = buildModule(spec);
+  built.group.position.set(spec.pos[0], spec.pos[1], spec.pos[2]);
+  scene.add(built.group);
+  blockHits.set(spec.id, built.hit);
+  blockMeshList.push(built.hit);
+  moduleVisuals.set(spec.id, built.setState);
+  built.edges.forEach((edge) => edgeObjects.push(edge));
 
   const el = document.createElement('div');
   el.className = 'label' + (spec.mini ? ' mini' : '') + (spec.ghost ? ' ghost' : '');
@@ -218,78 +285,28 @@ function addBlock(spec) {
     el.appendChild(meta);
   }
   const obj = new CSS2DObject(el);
-  const yOff = spec.size[1] / 2 + (spec.mini ? 0.3 : 0.55);
+  const yOff = spec.size[1] / 2 + (spec.mini ? 0.28 : 0.62);
   obj.position.set(spec.pos[0], spec.pos[1] + yOff, spec.pos[2]);
   scene.add(obj);
-
   labelObjects.set(spec.id, { obj, el, spec });
 }
 
 BLOCKS.forEach(addBlock);
 
-// ---------- 连接线 ----------
-function pointOf(id) {
-  const s = BLOCK_MAP[id];
-  return new THREE.Vector3(s.pos[0], s.pos[1], s.pos[2]);
-}
+// ---------- 走线 ----------
+Object.entries(TRACES).forEach(([id, trace]) => {
+  const built = buildTrace(trace);
+  built.group.userData.traceId = id;
+  scene.add(built.group);
 
-function makeCurve(fromId, toId) {
-  const a = pointOf(fromId);
-  const b = pointOf(toId);
-  const mid = a.clone().add(b).multiplyScalar(0.5);
-  mid.y += 0.55 + Math.abs(a.y - b.y) * 0.3;
-  mid.x += (b.z - a.z) * 0.06;
-  return new THREE.CatmullRomCurve3([a, mid, b]);
-}
-
-const CONNECTIONS = [
-  ['core', 'matrix'],
-  ['matrix', 'flashif'],
-  ['flashif', 'flash'],
-  ['matrix', 'sram'],
-  ['matrix', 'fsmc'],
-  ['matrix', 'bridge'],
-  ['bridge', 'apb2'],
-  ['bridge', 'apb1'],
-  ['dma1', 'matrix'],
-  ['dma2', 'matrix'],
-];
-
-const tubeMat = new THREE.MeshBasicMaterial({
-  color: 0x1e8f7c,
-  transparent: true,
-  opacity: 0.22,
-  blending: THREE.AdditiveBlending,
-  depthWrite: false,
-});
-CONNECTIONS.forEach(([a, b]) => {
-  const curve = makeCurve(a, b);
-  const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 26, 0.032, 6, false), tubeMat);
-  scene.add(tube);
-});
-
-// RCC 的时钟虚线
-const CLOCK_LINKS = [
-  ['rcc', 'core'],
-  ['rcc', 'matrix'],
-  ['rcc', 'bridge'],
-  ['rcc', 'apb1'],
-  ['rcc', 'apb2'],
-];
-const clockMat = new THREE.LineDashedMaterial({
-  color: 0xfacc15,
-  dashSize: 0.28,
-  gapSize: 0.22,
-  transparent: true,
-  opacity: 0.2,
-  depthWrite: false,
-});
-CLOCK_LINKS.forEach(([a, b]) => {
-  const curve = makeCurve(a, b);
-  const geo = new THREE.BufferGeometry().setFromPoints(curve.getPoints(48));
-  const line = new THREE.Line(geo, clockMat);
-  line.computeLineDistances();
-  scene.add(line);
+  if (trace.label) {
+    const el = document.createElement('div');
+    el.className = 'trace-label';
+    el.textContent = trace.label;
+    const obj = new CSS2DObject(el);
+    obj.position.set(trace.labelPos[0], trace.labelPos[1], trace.labelPos[2]);
+    scene.add(obj);
+  }
 });
 
 // ---------- 数据流粒子 ----------
@@ -315,14 +332,15 @@ const flowObjects = new Map();
 Object.entries(FLOWS).forEach(([mode, spec]) => {
   const group = new THREE.Group();
   group.visible = false;
-  const streams = spec.segments.map(([a, b], index) => {
-    const curve = makeCurve(a, b);
+  const streams = spec.segments.map((traceId, index) => {
+    const trace = TRACES[traceId];
+    const curve = new PolylineCurve(trace.points);
     const positions = new Float32Array(spec.count * 3);
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     const mat = new THREE.PointsMaterial({
       color: spec.color,
-      size: 0.3,
+      size: 0.32,
       map: dotTexture,
       transparent: true,
       opacity: 0.95,
@@ -341,7 +359,7 @@ Object.entries(FLOWS).forEach(([mode, spec]) => {
 // ---------- 相机飞行 ----------
 let camTween = null;
 
-function flyTo(position, target, duration = 1.1) {
+function flyTo(position, target, duration = 1.2) {
   camTween = {
     t: 0,
     dur: duration,
@@ -435,12 +453,12 @@ function applyBlockState() {
   const showAll = focus.has('*');
 
   BLOCKS.forEach((spec) => {
-    const mesh = blockMeshes.get(spec.id);
     const dim = !showAll && !focus.has(spec.id);
-    const opacity = spec.ghost ? 0.3 : dim ? 0.26 : 0.94;
-    const emissive = spec.ghost ? 0.05 : dim ? 0.06 : 0.22;
-    mesh.material.opacity = opacity;
-    mesh.material.emissiveIntensity = emissive;
+    dimStates.set(spec.id, dim);
+    const setState = moduleVisuals.get(spec.id);
+    if (setState) {
+      setState({ dim, selected: spec.id === selectedId, time: 0 });
+    }
 
     const label = labelObjects.get(spec.id);
     if (!label) return;
@@ -457,7 +475,9 @@ function clearSelectedLabel() {
 }
 
 function selectBlock(id) {
+  selectedId = null;
   clearSelectedLabel();
+  applyBlockState();
   selectedId = id;
   const spec = BLOCK_MAP[id];
   if (!spec) return;
@@ -466,6 +486,8 @@ function selectBlock(id) {
     label.el.classList.remove('hidden');
     label.el.classList.add('selected');
   }
+  const setState = moduleVisuals.get(id);
+  if (setState) setState({ dim: dimStates.get(id) ?? false, selected: true, time: 0 });
   showPanel(spec);
 }
 
@@ -476,9 +498,9 @@ function selectChapter(index, animate = true) {
 
   manualFlow = null;
   setFlow(chapter.flow);
-  applyBlockState();
   selectedId = null;
   clearSelectedLabel();
+  applyBlockState();
   if (location.hash !== `#${chapter.no}`) {
     history.replaceState(null, '', `#${chapter.no}`);
   }
@@ -657,7 +679,7 @@ window.addEventListener('keydown', (event) => {
 // ---------- 后期 ----------
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
-const bloomPass = new UnrealBloomPass(new THREE.Vector2(W(), H()), 0.75, 0.55, 0.32);
+const bloomPass = new UnrealBloomPass(new THREE.Vector2(W(), H()), 0.45, 0.4, 0.55);
 composer.addPass(bloomPass);
 composer.addPass(new OutputPass());
 
@@ -698,21 +720,16 @@ function animate() {
 
   controls.update();
 
-  // 扫描环缓慢旋转
-  scanRing.rotation.z += dt * 0.12;
-  scanRing.material.opacity = 0.2 + Math.sin(elapsed * 1.4) * 0.06;
+  scanRing.rotation.z += dt * 0.1;
+  scanRing.material.opacity = 0.18 + Math.sin(elapsed * 1.3) * 0.05;
 
-  // 选中模块呼吸
   if (selectedId) {
-    const mesh = blockMeshes.get(selectedId);
-    if (mesh) {
-      const spec = mesh.userData.spec;
-      mesh.material.emissiveIntensity = 0.34 + Math.sin(elapsed * 4.2) * 0.14;
-      if (spec.ghost) mesh.material.emissiveIntensity = 0.12 + Math.sin(elapsed * 4.2) * 0.06;
+    const setState = moduleVisuals.get(selectedId);
+    if (setState) {
+      setState({ dim: dimStates.get(selectedId) ?? false, selected: true, time: elapsed });
     }
   }
 
-  // 数据流粒子
   flowObjects.forEach(({ group, streams, spec }) => {
     if (!group.visible) return;
     for (const stream of streams) {
