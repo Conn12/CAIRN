@@ -1,21 +1,35 @@
 ---
 interface Props {
-  image: any;
+  image: string;
   caption: string;
   alt?: string;
 }
 
-const { image: Illustration, caption, alt } = Astro.props;
+const { image, caption, alt } = Astro.props;
 ---
 
 <figure class="share-figure">
-  <Illustration role="img" aria-label={alt ?? caption} />
-  <figcaption>{caption}</figcaption>
+  <div class="share-art" role="img" aria-label={alt ?? caption} set:html={image}></div>
+  <figcaption>
+    <span>{caption}</span>
+    <button
+      class="motion-toggle"
+      type="button"
+      aria-pressed="false"
+      data-motion-toggle
+    >
+      暂停动图
+    </button>
+  </figcaption>
 </figure>
 
 <style>
   .share-figure {
     margin: 0;
+  }
+
+  .share-art {
+    display: block;
   }
 
   .share-figure :global(svg) {
@@ -28,10 +42,62 @@ const { image: Illustration, caption, alt } = Astro.props;
   }
 
   .share-figure figcaption {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
     margin-top: 0.7rem;
     font-family: var(--mono);
     font-size: 0.68rem;
     color: var(--faint);
     letter-spacing: 0.04em;
   }
+
+  .motion-toggle {
+    flex: none;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    letter-spacing: inherit;
+    color: var(--faint);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    transition: color 0.15s ease;
+  }
+
+  .motion-toggle:hover {
+    color: var(--gold);
+  }
+
+  .motion-toggle:focus-visible {
+    outline: 1px solid var(--gold);
+    outline-offset: 3px;
+  }
 </style>
+
+<script>
+  const figureAnimations = (figure: Element) =>
+    document.getAnimations().filter((animation) => {
+      const target = animation.effect?.target;
+      return target instanceof Element && figure.contains(target);
+    });
+
+  for (const button of document.querySelectorAll('[data-motion-toggle]')) {
+    const figure = button.closest('.share-figure');
+    if (!figure) continue;
+
+    button.addEventListener('click', () => {
+      const paused = figure.classList.toggle('is-paused');
+
+      for (const animation of figureAnimations(figure)) {
+        if (paused) animation.pause();
+        else animation.play();
+      }
+
+      button.setAttribute('aria-pressed', String(paused));
+      button.textContent = paused ? '播放动图' : '暂停动图';
+    });
+  }
+</script>
