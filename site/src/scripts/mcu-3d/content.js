@@ -21,7 +21,7 @@ export const BLOCKS = [
     size: [4.2, 0.72, 3.0],
     color: 0x6f7bff,
     group: 'core',
-    desc: '取指、译码、执行都在这里完成，内部还有 NVIC 中断控制器。它通过 ICode、DCode 和系统总线三条通道接入总线矩阵。',
+    desc: '取指、译码、执行都在这里完成，内部还有 NVIC 中断控制器。ICode 直接连 Flash 接口；DCode 和系统总线接入总线矩阵。',
     tags: ['驱动单元', 'NVIC', '72MHz'],
   },
   {
@@ -74,13 +74,12 @@ export const BLOCKS = [
   },
   {
     id: 'fsmc',
-    kind: 'ghost',
+    kind: 'chip',
     label: 'FSMC',
-    meta: '外部存储器 · 部分型号',
-    pos: [1.9, 1.65, -1.6],
-    size: [2.1, 0.45, 1.4],
-    color: 0x35505c,
-    ghost: true,
+    meta: '外部存储器 · C8T6 无',
+    pos: [1.9, 1.78, -1.6],
+    size: [2.1, 0.6, 1.4],
+    color: 0x9a7b4f,
     group: 'mem',
     desc: '外部存储器控制器，把外部 SRAM、NOR、NAND 映射进 CPU 地址空间。C8T6 没有 FSMC，大容量型号才有。',
     tags: ['外部存储', '部分型号'],
@@ -118,7 +117,7 @@ export const BLOCKS = [
     size: [5.4, 0.28, 2.8],
     color: 0x38bdf8,
     group: 'periph',
-    desc: '高速外设总线板：GPIOA–C、ADC1/2、TIM1、SPI1、USART1、EXTI/AFIO。',
+    desc: '高速外设总线板：GPIOA–D、ADC1/2、TIM1、SPI1、USART1、EXTI/AFIO。',
     tags: ['72MHz', '外设板'],
   },
   {
@@ -204,6 +203,7 @@ const apb2Row2 = [
   ['spi1', 'SPI1', 'SPI 主机/从机接口，SPI1 挂在 APB2 上。', ['SPI']],
   ['usart1', 'USART1', '通用同步异步收发器，挂在 APB2 上，最高 72MHz。', ['串口']],
   ['exti', 'EXTI/AFIO', '外部中断控制器与复用功能重映射（AFIO）。', ['中断', '重映射']],
+  ['gpiod', 'GPIOD', '通用 I/O 端口 D，C8T6 只有 PD0/PD1 两个引脚。', ['0x4001 1400', 'GPIO']],
 ];
 
 const apb1Row1 = [
@@ -239,11 +239,11 @@ const ty = 1.47;
 
 export const TRACES = {
   icode: {
-    points: [[-5.7, ty, -4.4], [-4.6, ty, -4.4], [-4.0, ty, -4.4]],
-    width: 0.10,
+    points: [[-5.7, ty, -4.4], [-4.6, ty, -4.4], [-4.6, ty, -6.2], [0.9, ty, -6.2], [0.9, ty, -5.2]],
+    width: 0.12,
     color: 0x38e8c8,
-    label: 'ICode → Flash',
-    labelPos: [-5.6, 2.0, -4.4],
+    label: 'ICode · 指令 → Flash 接口',
+    labelPos: [-2.4, 1.95, -6.2],
   },
   dcode: {
     points: [[-5.7, ty, -3.2], [-4.0, ty, -3.2]],
@@ -288,7 +288,7 @@ export const TRACES = {
     width: 0.16,
     color: 0xffb347,
     label: 'AHB 系统总线',
-    labelPos: [-1.6, 1.70, 1.5],
+    labelPos: [0.0, 1.72, 1.2],
   },
   'ahb-b2': {
     points: [[1.7, ty, 1.5], [1.7, ty, 0.7], [1.75, ty, 0.7]],
@@ -426,7 +426,7 @@ export const FLOWS = {
     color: 0x38f0d0,
     speed: 0.22,
     count: 24,
-    segments: ['icode', 'matrix-flashif', 'flashif-flash'],
+    segments: ['icode', 'flashif-flash'],
   },
   data: {
     label: '取数',

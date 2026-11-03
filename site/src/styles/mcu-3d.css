@@ -251,6 +251,29 @@
   color: #a9c7c0;
 }
 
+.panel-section {
+  margin-bottom: 11px;
+}
+
+.panel-section:last-child {
+  margin-bottom: 4px;
+}
+
+.panel-section-label {
+  font-family: var(--mcu-mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: var(--mcu-teal);
+  margin-bottom: 3px;
+}
+
+.panel-section p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: #b7d4cd;
+}
+
 .panel-tags {
   display: flex;
   flex-wrap: wrap;

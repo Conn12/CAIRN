@@ -7,6 +7,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { BLOCKS, BLOCK_MAP, CHAPTERS, FLOWS, TRACES } from './content.js';
+import { INFO } from './info.js';
 import { buildModule, buildTrace, PolylineCurve, createPcbTexture, createDieTexture } from './geometry.js';
 
 const stage = document.getElementById('mcu-stage');
@@ -260,7 +261,7 @@ const edgeObjects = [];
 const labelObjects = new Map();
 const dimStates = new Map();
 
-const APB2_IDS = ['gpioa', 'gpiob', 'gpioc', 'adc1', 'adc2', 'tim1', 'spi1', 'usart1', 'exti'];
+const APB2_IDS = ['gpioa', 'gpiob', 'gpioc', 'gpiod', 'adc1', 'adc2', 'tim1', 'spi1', 'usart1', 'exti'];
 const APB1_IDS = ['tim2', 'usart2', 'i2c', 'spi2', 'can', 'usb', 'rtc', 'iwdg'];
 
 function addBlock(spec) {
@@ -392,7 +393,27 @@ const elExtra = document.getElementById('panel-extra');
 function showPanel(data) {
   elTitle.textContent = data.label;
   elMeta.textContent = data.meta || '';
-  elDesc.textContent = data.desc || '';
+  elDesc.innerHTML = '';
+  if (data.what || data.does || data.how) {
+    [
+      ['是什么', data.what],
+      ['做什么', data.does],
+      ['怎么用', data.how],
+    ].forEach(([label, text]) => {
+      if (!text) return;
+      const section = document.createElement('div');
+      section.className = 'panel-section';
+      const heading = document.createElement('div');
+      heading.className = 'panel-section-label';
+      heading.textContent = label;
+      const paragraph = document.createElement('p');
+      paragraph.textContent = text;
+      section.append(heading, paragraph);
+      elDesc.appendChild(section);
+    });
+  } else {
+    elDesc.textContent = data.desc || '';
+  }
   elTags.innerHTML = '';
   (data.tags || []).forEach((tag) => {
     const span = document.createElement('span');
@@ -488,7 +509,7 @@ function selectBlock(id) {
   }
   const setState = moduleVisuals.get(id);
   if (setState) setState({ dim: dimStates.get(id) ?? false, selected: true, time: 0 });
-  showPanel(spec);
+  showPanel({ ...spec, ...(INFO[id] || {}) });
 }
 
 function selectChapter(index, animate = true) {
@@ -754,7 +775,7 @@ function animate() {
 }
 
 // ---------- 启动 ----------
-window.__MCU3D_DEBUG = { THREE, renderer, scene, camera, stage, composer, bloomPass };
+window.__MCU3D_DEBUG = { THREE, renderer, scene, camera, stage, composer, bloomPass, selectBlock };
 const hashNo = location.hash.replace('#', '');
 const hashIndex = CHAPTERS.findIndex((chapter) => chapter.no === hashNo);
 selectChapter(hashIndex >= 0 ? hashIndex : 0, false);
