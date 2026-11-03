@@ -6,23 +6,29 @@
 
 ## 当前状态
 
-- 入口：`/models/`（单页，全屏 3D 舞台）
-- 已有 1 个模型：STM32 系统结构（`mcu-3d`）
+- 入口：`/models/`（模型架，列出所有模型）
+- 已有 2 个模型：
+  - `/models/mcu-3d/`：STM32 系统结构
+  - `/models/ec-s100-watch/`：EC-S100 手表演示台（第一版）
 - 状态：可用；尚未公网部署
-- 当前版本：`v0.14.0`
-- 单模型详细交接：`docs\models\mcu-3d.md`
+- 当前版本：`v0.15.0`
+- 单模型详细交接：`docs\models\mcu-3d.md`、`docs\models\ec-s100-watch.md`
 
 ## 文件地图
 
 | 作用 | 文件 |
 | --- | --- |
-| 版块页面 | `site\src\pages\models.astro` |
-| 3D 舞台与 HUD | `site\src\components\model-mcu3d.astro` |
-| 场景装配 | `site\src\scripts\mcu-3d\main.js` |
-| 模块 / 线路 / 章节 / 数据流 | `site\src\scripts\mcu-3d\content.js` |
-| 几何生成（封装、走线、纹理） | `site\src\scripts\mcu-3d\geometry.js` |
-| 模块与线路讲解 | `site\src\scripts\mcu-3d\info.js` |
-| 样式 | `site\src\styles\mcu-3d.css` |
+| 模型架 | `site\src\pages\models\index.astro` |
+| 模型注册表 | `site\src\data\models.ts` |
+| 模型架侧栏 | `site\src\components\model-sidebar.astro` |
+| STM32 页面 | `site\src\pages\models\mcu-3d.astro` |
+| STM32 舞台与 HUD | `site\src\components\model-mcu3d.astro` |
+| STM32 场景装配 | `site\src\scripts\mcu-3d\main.js` |
+| STM32 数据 / 几何 / 讲解 | `site\src\scripts\mcu-3d\content.js`、`geometry.js`、`info.js` |
+| EC-S100 页面 | `site\src\pages\models\ec-s100-watch.astro` |
+| EC-S100 舞台、屏幕镜像 | `site\src\components\model-ec-s100.astro` |
+| EC-S100 场景与逻辑 | `site\src\scripts\ec-s100\main.js`、`content.js` |
+| EC-S100 样式 | `site\src\styles\ec-s100.css` |
 | 全宽页面支持 | `site\src\layouts\base.astro`（`bare` 属性） |
 | 旧工具目录指针 | `tools\README.md` |
 | 决策记录 | `docs\decisions\2026-11-03-physical-models.md` |
@@ -44,26 +50,26 @@
 
 ## 已完成
 
-- 站点第四版块、顶栏入口、全宽舞台
-- 严格按参考手册图1的拓扑布置模块和走线
-- 实物化模块：芯片封装、引脚、键合线、交叉开关、外设小板、晶振、玻璃罩
-- 铜走线 + 过孔 + 箭头 + 线路标签
-- 六个章节、五种数据流（取指/取数/外设/DMA/时钟）
-- 点击模块、模块标签、总线标签、总线本体都能看「是什么 / 做什么 / 怎么用」
-- PCB 与晶圆纹理、环境反射、Bloom
+- 站点第四版块、顶栏入口、模型架 + 每模型独立页
+- `models.ts` 注册表，模型架/侧栏/计数都从它来
+- STM32：按参考手册图1的拓扑、实物化模块、铜走线、六章、五种数据流、模块/总线点击讲解
+- EC-S100 第一版：主控板 + 扩展板 + 可插拔屏幕模块；240×280 屏幕镜像；10 个页面；6 个章节；传感器滑块；器件点击；OTA 全流程（V2.6→V2.7）
+- 插拔扩展板：扩展板升起、屏幕断电、镜像显示未连接
 
 ## 未完成 / 下一步
 
-1. **版块结构**：拆成 `/models/` 索引页 + `/models/<slug>/` 每模型独立页；抽共享 `ModelStage`；建 `models.ts` 注册表。
-2. **准确性**：补 SDIO（图1 有、C8T6 无，可做虚体）；DMA 请求拆成 APB2/APB1 到 DMA1/DMA2 多条。
-3. **实物感**：可选接入真实 GLB 元件（封装、板卡），资产放 `assets\models\`。
-4. **移动端**：窄屏 HUD 和面板仍偏挤。
-5. **部署**：等远程仓库和托管配置。
+1. **EC-S100 全功能**：补齐 22 个 LVGL 页面（当前 10 个），还原原界面的布局、字体、图标和手势；NFC/二维码/围栏/天气页面的交互。
+2. **EC-S100 实物细节**：等老大提供主板/扩展板/屏幕照片或尺寸，精修器件位置、表壳/连接器/排线。
+3. **STM32 准确性**：补 SDIO（图1 有、C8T6 无）；DMA 请求拆成多条；真实 GLB 元件。
+4. **共享舞台**：两个模型页目前各自维护 HUD；后续抽 `ModelStage`，统一章节/面板/工具条。
+5. **移动端**：窄屏 HUD 和面板仍偏挤。
+6. **部署**：等托管配置。
 
 ## 最近变更
 
 | 日期 | 版本 | 内容 |
 | --- | --- | --- |
+| 2026-11-03 | v0.15.0 | 模型架 + 独立模型页；新增 EC-S100 演示台第一版 |
 | 2026-11-03 | v0.14.0 | 补本开发日志与总交接 |
 | 2026-11-03 | v0.13.0 | 修复点击坐标偏移；模块/标签/总线可点击；17 条总线补解析 |
 | 2026-11-03 | v0.12.0 | ICode 改为直连 Flash 接口；FSMC 实体化；补模块讲解 |

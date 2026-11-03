@@ -1,0 +1,49 @@
+---
+import { models } from '../data/models';
+
+const path = Astro.url.pathname;
+---
+
+<aside class="sidebar">
+  <details class="sidebar-mobile">
+    <summary>
+      <span>物理模型</span>
+      <span class="count">{models.length}</span>
+    </summary>
+    <nav aria-label="物理模型">
+      <ul class="post-list">
+        {models.map((model) => (
+          <li>
+            <a
+              class:list={['post-link', { active: path === model.href }]}
+              href={model.href}
+            >
+              <span class="post-link-title">{model.title}</span>
+              <span class="share-sub">{model.kind} · {model.status}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  </details>
+
+  <nav class="sidebar-nav" aria-label="物理模型">
+    <p class="nav-label">
+      <span>物理模型</span>
+      <span class="count">{models.length}</span>
+    </p>
+    <ul class="post-list">
+      {models.map((model) => (
+        <li>
+          <a
+            class:list={['post-link', { active: path === model.href }]}
+            href={model.href}
+          >
+            <span class="post-link-title">{model.title}</span>
+            <span class="share-sub">{model.kind} · {model.status}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+</aside>

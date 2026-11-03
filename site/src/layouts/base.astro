@@ -5,6 +5,7 @@ import ShareSidebar from '../components/share-sidebar.astro';
 import { getCollection } from 'astro:content';
 import { formatDate } from '../utils/date';
 import { shareCount } from '../data/shares';
+import { modelCount } from '../data/models';
 
 type Section = 'articles' | 'share' | 'learning' | 'models';
 
@@ -36,7 +37,7 @@ const headerMeta =
   (section === 'share'
     ? `${shareCount} 个分享`
     : section === 'models'
-    ? '1 个模型'
+    ? `${modelCount} 个模型`
     : latest
       ? `${posts.length} 篇 · 最后更新 ${formatDate(latest.data.date)}`
       : '还没有文章');

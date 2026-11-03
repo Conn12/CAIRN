@@ -5,7 +5,7 @@
 ## 现有工具
 
 - **mcu-3d**：STM32F103C8T6 系统结构 3D 解剖。2026-11-03 起并入站点「物理模型」版块。
-  - 入口：`/models/`（站点内）
+  - 入口：`/models/mcu-3d/`（站点内；模型架在 `/models/`）
   - 源码：`site\src\scripts\mcu-3d\`
   - 样式：`site\src\styles\mcu-3d.css`
   - 组件：`site\src\components\model-mcu3d.astro`

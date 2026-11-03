@@ -3,16 +3,16 @@
 ## 概览
 
 - 模型：STM32F103C8T6 系统结构解剖
-- 路由：`/models/`
+- 路由：`/models/mcu-3d/`（模型架在 `/models/`）
 - 目的：把参考手册图1 的“系统结构”做成可旋转、可点击、可看数据流的 3D 线框
-- 当前版本：`v0.14.0`
+- 当前版本：`v0.15.0`
 
 ## 运行
 
 ```bash
 cd site
-npm run dev     # http://localhost:4321/models/
-npm run build   # 输出 site/dist/models/
+npm run dev     # http://localhost:4321/models/mcu-3d/
+npm run build   # 输出 site/dist/models/mcu-3d/
 ```
 
 - 纯前端，Three.js `0.187` 从 `site/node_modules` 引入，无 CDN
@@ -175,6 +175,7 @@ pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
 | v0.12.0 | ICode 直连 Flash 接口；FSMC 实体化；模块三段讲解 |
 | v0.13.0 | 修复拾取偏移；模块/标签/总线可点击；17 条总线解析 |
 | v0.14.0 | 补开发日志与交接文档 |
+| v0.15.0 | 物理模型改为模型架 + 独立页，本模型迁到 `/models/mcu-3d/` |
 
 ## 接手提示
 

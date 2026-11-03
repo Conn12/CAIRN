@@ -1,0 +1,183 @@
+---
+import '../styles/ec-s100.css';
+---
+
+<section class="es100-stage" id="es100-stage" aria-label="EC-S100 手表演示台">
+  <div id="es100-viewport"></div>
+
+  <header class="es100-top">
+    <div class="es100-brand">◈ LAB<span style="opacity:.5"> / </span>02</div>
+    <div class="es100-headline">EC-S100 手表演示台</div>
+    <div class="es100-badge">STM32F411CEU6 · 240×280 · FreeRTOS</div>
+  </header>
+
+  <nav class="es100-chapters" id="es100-chapters" aria-label="章节"></nav>
+
+  <aside class="es100-rail" aria-label="场景控制">
+    <button type="button" data-act="labels" class="active">标签</button>
+    <button type="button" data-act="edges" class="active">描边</button>
+    <button type="button" data-act="plug" class="danger">拔出扩展板</button>
+    <button type="button" data-act="rotate">自动旋转</button>
+    <button type="button" data-act="reset">重置视角</button>
+  </aside>
+
+  <section class="es100-panel">
+    <div class="es100-tabs" id="es100-tabs">
+      <button type="button" data-tab="screen" class="active">屏幕</button>
+      <button type="button" data-tab="part">器件</button>
+      <button type="button" data-tab="sensor">传感器</button>
+      <button type="button" data-tab="ota">OTA</button>
+    </div>
+
+    <div class="es100-tabbody">
+      <div class="es100-tab" data-panel="screen">
+        <div class="e-mirror">
+          <div class="e-screen" id="e-screen">
+            <div class="e-off"><span>扩展板未连接</span><span style="font-size:9px">PLUG IN TO BOOT</span></div>
+
+            <div class="e-page e-face" data-page="face">
+              <div>
+                <div class="e-face-time" data-bind="time">12:34</div>
+                <div class="e-face-date" data-bind="date">11月3日 周一</div>
+              </div>
+              <div class="e-face-weather"><span>深圳 · 晴</span><span data-bind="temp-face">26.5°C</span></div>
+              <div class="e-stats">
+                <div class="e-stat"><b data-bind="hr-face">72</b><span>BPM</span></div>
+                <div class="e-stat"><b data-bind="steps-face">7200</b><span>步数</span></div>
+                <div class="e-stat"><b data-bind="bat-face">86%</b><span>电量</span></div>
+              </div>
+            </div>
+
+            <div class="e-page e-menu" data-page="menu" hidden>
+              <div class="e-menu-head"><span>MENU</span><span>V2.6</span></div>
+              <div class="e-menu-grid">
+                <button class="e-menu-item" data-go="heart"><span class="e-menu-icon">心</span>心率</button>
+                <button class="e-menu-item" data-go="message"><span class="e-menu-icon">信</span>消息</button>
+                <button class="e-menu-item" data-go="nfc"><span class="e-menu-icon">N</span>NFC</button>
+                <button class="e-menu-item" data-go="qr"><span class="e-menu-icon">Q</span>二维码</button>
+                <button class="e-menu-item" data-go="weather"><span class="e-menu-icon">天</span>天气</button>
+                <button class="e-menu-item" data-go="fence"><span class="e-menu-icon">围</span>围栏</button>
+                <button class="e-menu-item" data-go="settings"><span class="e-menu-icon">设</span>设置</button>
+                <button class="e-menu-item" data-go="ota"><span class="e-menu-icon">OTA</span>更新</button>
+                <button class="e-menu-item" data-go="face"><span class="e-menu-icon">●</span>返回</button>
+              </div>
+            </div>
+
+            <div class="e-page" data-page="heart" hidden>
+              <div class="e-subhead"><button data-go="menu">‹ 返回</button><h3>心率</h3></div>
+              <div class="e-bpm"><span data-bind="hr-bpm">72</span><small>BPM</small></div>
+              <div class="e-wave" aria-hidden="true">
+                <i></i><i></i><i></i><i></i><i></i><i></i>
+                <i></i><i></i><i></i><i></i><i></i><i></i>
+              </div>
+              <button class="e-btn primary" id="e-start-heart">启动血氧检测</button>
+              <p class="e-note">EM7028 · 20ms 采样<br />原始 ADC 右移 2 位后进入心跳算法</p>
+            </div>
+
+            <div class="e-page" data-page="message" hidden>
+              <div class="e-subhead"><button data-go="menu">‹ 返回</button><h3>消息</h3></div>
+              <div class="e-rows">
+                <div class="e-row"><span>体温</span><b data-bind="temp-msg">30.1°C</b></div>
+                <div class="e-row"><span>心率</span><b><span data-bind="hr-msg">64</span>/min</b></div>
+                <div class="e-row"><span>爬行</span><b data-bind="steps-msg">720 ppm</b></div>
+                <div class="e-row"><span>气压</span><b data-bind="pres-msg">1013 hPa</b></div>
+              </div>
+              <p class="e-note">数据来自 AHT21 / EM7028 / SPL06 / MPU6050</p>
+            </div>
+
+            <div class="e-page" data-page="settings" hidden>
+              <div class="e-subhead"><button data-go="menu">‹ 返回</button><h3>设置</h3></div>
+              <div class="e-rows">
+                <div class="e-row"><span>菜单样式</span><b>渐变</b></div>
+                <div class="e-row"><span>亮度</span><b>70%</b></div>
+                <div class="e-row"><span>版本</span><b>V2.6</b></div>
+              </div>
+              <p class="e-note">对应 setup_scr_Set：渐变 / 环形 / 默认三种菜单</p>
+            </div>
+
+            <div class="e-page" data-page="ota" hidden>
+              <div class="e-subhead"><button data-go="menu">‹ 返回</button><h3>系统更新</h3></div>
+              <div class="e-row"><span>当前版本</span><b data-bind="ota-version">V2.6</b></div>
+              <div class="e-progress"><i id="e-ota-bar"></i></div>
+              <div class="e-note" data-bind="ota-text">等待版本检测</div>
+              <button class="e-btn primary" id="e-start-ota">版本检测 / 升级</button>
+            </div>
+
+            <div class="e-page" data-page="nfc" hidden>
+              <div class="e-subhead"><button data-go="menu">‹ 返回</button><h3>NFC 刷卡</h3></div>
+              <p class="e-note">请紧靠感应区刷卡</p>
+            </div>
+
+            <div class="e-page" data-page="qr" hidden>
+              <div class="e-subhead"><button data-go="menu">‹ 返回</button><h3>二维码组网</h3></div>
+              <p class="e-note">二维码组网：用手机扫码配网</p>
+            </div>
+
+            <div class="e-page" data-page="fence" hidden>
+              <div class="e-subhead"><button data-go="menu">‹ 返回</button><h3>电子围栏</h3></div>
+              <p class="e-note">电子围栏预警<br />丢失节点信息 / 丢失节点前 GPS 信息</p>
+            </div>
+
+            <div class="e-page" data-page="weather" hidden>
+              <div class="e-subhead"><button data-go="menu">‹ 返回</button><h3>天气</h3></div>
+              <p class="e-note">深圳 · 晴 24°C<br />恶劣天气预警</p>
+            </div>
+          </div>
+        </div>
+        <p class="es100-hint">点击屏幕里的图标或按钮；UI 尺寸按代码的 240×280。插拔扩展板会断电。</p>
+      </div>
+
+      <div class="es100-tab e-part" data-panel="part" hidden>
+        <div class="e-part-empty" id="e-part-empty">点击 3D 场景里的器件，查看它是什么、做什么、怎么用。</div>
+        <div class="e-part" id="e-part-info" hidden>
+          <h2 id="e-part-title"></h2>
+          <div class="meta" id="e-part-meta"></div>
+          <p id="e-part-desc"></p>
+          <div class="tags" id="e-part-tags"></div>
+        </div>
+      </div>
+
+      <div class="es100-tab" data-panel="sensor" hidden>
+        <div class="e-sim">
+          <div class="e-sim-row"><label>温度</label><input type="range" id="sim-temp" min="15" max="35" step="0.1" value="26.5" /><output id="out-temp">26.5</output></div>
+          <div class="e-sim-row"><label>湿度</label><input type="range" id="sim-humi" min="20" max="90" step="1" value="55" /><output id="out-humi">55</output></div>
+          <div class="e-sim-row"><label>气压</label><input type="range" id="sim-pres" min="950" max="1050" step="1" value="1013" /><output id="out-pres">1013</output></div>
+          <div class="e-sim-row"><label>心率</label><input type="range" id="sim-hr" min="45" max="150" step="1" value="72" /><output id="out-hr">72</output></div>
+          <div class="e-sim-row"><label>步数</label><input type="range" id="sim-steps" min="0" max="20000" step="10" value="7200" /><output id="out-steps">7200</output></div>
+          <div class="e-sim-row"><label>电量</label><input type="range" id="sim-bat" min="0" max="100" step="1" value="86" /><output id="out-bat">86</output></div>
+        </div>
+        <p class="es100-hint">这些就是传感器输入。屏幕、表盘和 3D 屏会同步变化。</p>
+      </div>
+
+      <div class="es100-tab" data-panel="ota" hidden>
+        <div class="e-ota-state" id="e-ota-state">空闲 · 等待 0x11 0x22 0x33</div>
+        <div class="e-progress"><i id="e-ota-bar-2"></i></div>
+        <ul class="e-ota-log" id="e-ota-log">
+          <li data-step="cmd">蓝牙命令 0x11 0x22 0x33</li>
+          <li data-step="ymodem">USART1 · YMODEM 接收</li>
+          <li data-step="w25q">写入 W25Q 外部 Flash</li>
+          <li data-step="flag">写 App 标志区 0x08008000</li>
+          <li data-step="reset">软复位 · Bootloader 搬运</li>
+        </ul>
+        <button class="e-btn primary" id="e-ota-start">开始 OTA</button>
+        <p class="es100-hint">模拟 V2.6 的真实升级链路，不改动内部 Flash 内容。</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="es100-bottom">
+    <div>
+      <div class="es100-chapter-no" id="es100-chapter-no">CHAPTER 01 / 06</div>
+      <div class="es100-chapter-title" id="es100-chapter-title">硬件组合</div>
+    </div>
+    <p class="es100-narration" id="es100-narration"></p>
+    <div class="es100-nav">
+      <button type="button" id="es100-prev">← 上一章</button>
+      <button type="button" id="es100-next">下一章 →</button>
+    </div>
+  </footer>
+</section>
+
+<script>
+  import '../scripts/ec-s100/main.js';
+</script>

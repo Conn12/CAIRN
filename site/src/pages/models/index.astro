@@ -1,0 +1,286 @@
+---
+import Base from '../../layouts/base.astro';
+import ModelSidebar from '../../components/model-sidebar.astro';
+import { models } from '../../data/models';
+---
+
+<Base
+  title="物理模型"
+  description="把硬件拆开看：可交互的三维物理模型。"
+  section="models"
+>
+  <ModelSidebar slot="sidebar" />
+
+  <div class="models-intro">
+    <p class="models-kicker">物理模型</p>
+    <h1>把硬件拆开看。</h1>
+    <p class="models-lede">
+      芯片、板卡、整机。每个模型都能旋转、拆解、点开看结构和功能。
+    </p>
+  </div>
+
+  <div class="model-grid">
+    {models.map((model) => (
+      <a class="model-card" href={model.href} style={`--accent:${model.accent}`}>
+        <div class="model-preview" data-kind={model.kind}>
+          {model.id === 'mcu-3d' ? (
+            <div class="preview-chip" aria-hidden="true">
+              <span class="preview-core">CPU</span>
+              <span class="preview-bus" />
+              <span class="preview-mem">MEM</span>
+              <span class="preview-periph" />
+            </div>
+          ) : (
+            <div class="preview-screen" aria-hidden="true">
+              <span class="preview-screen-time">12:34</span>
+              <span class="preview-screen-grid">
+                <i /><i /><i /><i /><i /><i />
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div class="model-body">
+          <div class="model-topline">
+            <span class="model-kind">{model.kind}</span>
+            <span class:list={['model-status', { done: model.status === '已完成' }]}>
+              {model.status}
+            </span>
+          </div>
+          <h2>{model.title}</h2>
+          <p class="model-sub">{model.sub}</p>
+          <p class="model-summary">{model.summary}</p>
+          <div class="model-tech">
+            {model.tech.map((item) => <span>{item}</span>)}
+          </div>
+        </div>
+      </a>
+    ))}
+  </div>
+</Base>
+
+<style>
+  .models-intro {
+    padding-bottom: 1.75rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .models-kicker {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.18em;
+    color: var(--faint);
+    margin-bottom: 0.7rem;
+  }
+
+  .models-intro h1 {
+    font-size: clamp(1.7rem, 4vw, 2.2rem);
+    letter-spacing: 0.02em;
+    margin-bottom: 0.7rem;
+  }
+
+  .models-lede {
+    max-width: 34rem;
+    color: var(--dim);
+    font-size: 0.95rem;
+    line-height: 1.8;
+  }
+
+  .model-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.1rem;
+  }
+
+  .model-card {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--bg-soft);
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+
+  .model-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .model-preview {
+    position: relative;
+    height: 9.5rem;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 62%),
+      linear-gradient(160deg, #0b0f14, #090b0f);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .model-preview::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  .preview-chip {
+    position: absolute;
+    inset: 2rem 3rem;
+    border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+    border-radius: 6px;
+    box-shadow: 0 0 26px color-mix(in srgb, var(--accent) 18%, transparent);
+  }
+
+  .preview-core,
+  .preview-mem {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 0.25rem 0.4rem;
+    border: 1px solid color-mix(in srgb, var(--accent) 70%, transparent);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 0.55rem;
+    letter-spacing: 0.08em;
+  }
+
+  .preview-core { left: 0.8rem; }
+  .preview-mem { right: 0.8rem; }
+
+  .preview-bus {
+    position: absolute;
+    left: 30%;
+    right: 30%;
+    top: 50%;
+    height: 2px;
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent);
+  }
+
+  .preview-periph {
+    position: absolute;
+    right: 0.9rem;
+    bottom: 0.7rem;
+    width: 2.2rem;
+    height: 0.8rem;
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+
+  .preview-screen {
+    position: absolute;
+    top: 1.3rem;
+    left: 50%;
+    width: 5.6rem;
+    height: 6.5rem;
+    transform: translateX(-50%) rotate(-4deg);
+    border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent);
+    border-radius: 0.6rem;
+    background: #050a0c;
+    box-shadow: 0 0 28px color-mix(in srgb, var(--accent) 20%, transparent);
+  }
+
+  .preview-screen-time {
+    position: absolute;
+    top: 0.7rem;
+    left: 0.7rem;
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+  }
+
+  .preview-screen-grid {
+    position: absolute;
+    left: 0.8rem;
+    right: 0.8rem;
+    bottom: 0.8rem;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.28rem;
+  }
+
+  .preview-screen-grid i {
+    height: 0.7rem;
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+    border-radius: 2px;
+  }
+
+  .model-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.32rem;
+    padding: 0.95rem 1rem 1rem;
+  }
+
+  .model-topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .model-kind {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+  }
+
+  .model-status {
+    font-size: 0.62rem;
+    color: var(--faint);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.1rem 0.45rem;
+  }
+
+  .model-status.done {
+    color: var(--gold);
+    border-color: color-mix(in srgb, var(--gold) 40%, transparent);
+  }
+
+  .model-body h2 {
+    font-size: 1.05rem;
+    letter-spacing: 0.02em;
+    margin-top: 0.15rem;
+  }
+
+  .model-sub {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    color: var(--dim);
+  }
+
+  .model-summary {
+    margin-top: 0.25rem;
+    color: var(--dim);
+    font-size: 0.78rem;
+    line-height: 1.7;
+  }
+
+  .model-tech {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-top: 0.45rem;
+  }
+
+  .model-tech span {
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    color: var(--faint);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 0.12rem 0.35rem;
+  }
+
+  @media (max-width: 900px) {
+    .model-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
