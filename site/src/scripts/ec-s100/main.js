@@ -14,7 +14,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(W(), H());
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.2;
+renderer.toneMappingExposure = 1.3;
 viewport.appendChild(renderer.domElement);
 
 const labelRenderer = new CSS2DRenderer();
@@ -28,10 +28,10 @@ scene.background = new THREE.Color(0x04090c);
 scene.fog = new THREE.FogExp2(0x04090c, 0.011);
 
 const camera = new THREE.PerspectiveCamera(42, W() / H(), 0.1, 240);
-camera.position.set(20, 17, 28);
+camera.position.set(22, 17, 29);
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(0, 3.5, 0);
+controls.target.set(1.2, 2.8, 0);
 controls.enableDamping = true;
 controls.dampingFactor = 0.06;
 controls.minDistance = 9;
@@ -40,10 +40,10 @@ controls.maxPolarAngle = Math.PI * 0.49;
 controls.autoRotateSpeed = 0.5;
 controls.update();
 
-scene.add(new THREE.HemisphereLight(0xa8fff0, 0x051018, 1.05));
-scene.add(new THREE.AmbientLight(0x5f8f9a, 0.42));
+scene.add(new THREE.HemisphereLight(0xa8fff0, 0x0a2020, 1.25));
+scene.add(new THREE.AmbientLight(0x6fa7b0, 0.55));
 
-const keyLight = new THREE.DirectionalLight(0xfff6e8, 3.0);
+const keyLight = new THREE.DirectionalLight(0xfff6e8, 3.2);
 keyLight.position.set(16, 26, 14);
 scene.add(keyLight);
 
@@ -51,11 +51,11 @@ const fillLight = new THREE.DirectionalLight(0x8fd8ff, 0.9);
 fillLight.position.set(-18, 12, -12);
 scene.add(fillLight);
 
-const cyanLight = new THREE.PointLight(0x4fd1ff, 55, 40, 2);
+const cyanLight = new THREE.PointLight(0x4fd1ff, 70, 40, 2);
 cyanLight.position.set(-10, 10, -8);
 scene.add(cyanLight);
 
-const goldLight = new THREE.PointLight(0xffb347, 38, 34, 2);
+const goldLight = new THREE.PointLight(0xffb347, 50, 34, 2);
 goldLight.position.set(10, 8, 10);
 scene.add(goldLight);
 
@@ -132,15 +132,15 @@ const grid = new THREE.GridHelper(90, 90, 0x0f4a50, 0x0a2a30);
 grid.position.y = 0.01; grid.material.transparent = true; grid.material.opacity = 0.28; scene.add(grid);
 
 const baseBoard = new THREE.Group();
-const basePcb = new THREE.Mesh(rounded(40, 0.6, 28, 0.08), new THREE.MeshStandardMaterial({ color: 0x0f4a36, roughness: 0.72, metalness: 0.16 }));
+const basePcb = new THREE.Mesh(rounded(32, 0.6, 22, 0.08), new THREE.MeshStandardMaterial({ color: 0x17664a, roughness: 0.72, metalness: 0.16 }));
 basePcb.position.y = 0.7;
 baseBoard.add(basePcb);
 const baseTop = new THREE.Mesh(
-  new THREE.PlaneGeometry(39.4, 27.4),
-  new THREE.MeshStandardMaterial({ map: makeBoardTexture('#0d3d2c', 'rgba(63,240,200,0.18)', 'EC-S100 MODULE CARRIER · V2.6'), roughness: 0.8, metalness: 0.12 }),
+  new THREE.PlaneGeometry(31.4, 21.4),
+  new THREE.MeshStandardMaterial({ map: makeBoardTexture('#14503a', 'rgba(63,240,200,0.22)', 'EC-S100 MODULE CARRIER · V2.6'), roughness: 0.8, metalness: 0.12 }),
 );
 baseTop.rotation.x = -Math.PI / 2; baseTop.position.y = 1.01; baseBoard.add(baseTop);
-addShadow(baseBoard, 40, 28, 0.38);
+addShadow(baseBoard, 32, 22, 0.38);
 scene.add(baseBoard);
 
 const titleCanvas = document.createElement('canvas');
@@ -152,9 +152,9 @@ tctx.font = '600 54px "Cascadia Mono", Consolas, monospace';
 tctx.fillText('EC-S100 · MODULE LAB', 24, 80);
 const titleTex = new THREE.CanvasTexture(titleCanvas);
 titleTex.colorSpace = THREE.SRGBColorSpace;
-const titlePlane = new THREE.Mesh(new THREE.PlaneGeometry(12, 1.5), new THREE.MeshBasicMaterial({ map: titleTex, transparent: true, opacity: 0.8, depthWrite: false }));
+const titlePlane = new THREE.Mesh(new THREE.PlaneGeometry(10, 1.25), new THREE.MeshBasicMaterial({ map: titleTex, transparent: true, opacity: 0.8, depthWrite: false }));
 titlePlane.rotation.x = -Math.PI / 2;
-titlePlane.position.set(-8, 1.02, -12.6);
+titlePlane.position.set(-6, 1.02, -10.2);
 baseBoard.add(titlePlane);
 
 // ---------- 模块 ----------
@@ -228,7 +228,7 @@ function addSocket(module) {
 function pinTexture(module) {
   const c = document.createElement('canvas'); c.width = 512; c.height = 384;
   const g = c.getContext('2d');
-  g.fillStyle = '#071410'; g.fillRect(0, 0, 512, 384);
+  g.fillStyle = '#15503a'; g.fillRect(0, 0, 512, 384);
   g.strokeStyle = 'rgba(63,240,200,0.12)'; g.lineWidth = 1;
   for (let i = 0; i <= 512; i += 32) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i, 384); g.stroke(); }
   g.fillStyle = 'rgba(210,255,240,0.85)';
@@ -285,32 +285,35 @@ function buildCore(module, group) {
   const pcbMat = new THREE.MeshStandardMaterial({ color: 0x0f3c52, metalness: 0.2, roughness: 0.7 });
   group.add(new THREE.Mesh(rounded(w, h, d, 0.06), pcbMat));
   const top = new THREE.Mesh(new THREE.PlaneGeometry(w - 0.4, d - 0.4), new THREE.MeshStandardMaterial({
-    map: makeBoardTexture('#0c2b3d', 'rgba(79,209,255,0.2)', 'STM32F411 CORE'), roughness: 0.8, metalness: 0.12,
+    map: makeBoardTexture('#12405a', 'rgba(79,209,255,0.24)', 'STM32F411 CORE'), roughness: 0.8, metalness: 0.12,
   }));
   top.rotation.x = -Math.PI / 2; top.position.y = h / 2 + 0.01; group.add(top);
 
-  addChip(group, -3.5, 0.55, 0, 2.4, 0.36, 2.4, 0x161b22, 0x4f8cff);
+  addChip(group, -3, 0.55, 0, 2.0, 0.36, 2.0, 0x161b22, 0x4f8cff);
   const usb = new THREE.Mesh(rounded(1.3, 0.4, 1.5, 0.03), silverMat);
-  usb.position.set(7.2, 0.45, 4.2); group.add(usb);
-  for (const [x, z] of [[-6.5, 4.4], [6.2, 4.4]]) {
+  usb.position.set(4.5, 0.45, 2.6); group.add(usb);
+  for (const [x, z] of [[-4.2, 2.8], [3.2, 2.8]]) {
     const key = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.28, 0.5), goldMat);
     key.position.set(x, 0.45, z); group.add(key);
   }
-  for (const z of [-5.2, 5.2]) {
-    const strip = new THREE.Mesh(new THREE.BoxGeometry(14.5, 0.22, 0.55), darkMat);
+  for (const z of [-3.4, 3.4]) {
+    const strip = new THREE.Mesh(new THREE.BoxGeometry(9.5, 0.22, 0.55), darkMat);
     strip.position.set(0, 0.38, z); group.add(strip);
     for (let i = 0; i < 20; i += 1) {
       const pin = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.34, 0.13), goldMat);
-      pin.position.set(-6.8 + i * 0.72, 0.52, z); group.add(pin);
+      pin.position.set(-4.5 + i * 0.47, 0.52, z); group.add(pin);
     }
   }
   addShadow(group, w, d, -h / 2 - 0.01);
-  return { pcbMat, setState: ({ dim = false } = {}) => { pcbMat.transparent = dim; pcbMat.opacity = dim ? 0.35 : 1; } };
+  const edgeMat = new THREE.LineBasicMaterial({ color: 0x4f8cff, transparent: true, opacity: 0.5 });
+  const edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w, h, d)), edgeMat);
+  group.add(edges); edgeObjects.push(edges);
+  return { pcbMat, setState: ({ dim = false } = {}) => { pcbMat.transparent = dim; pcbMat.opacity = dim ? 0.35 : 1; edgeMat.opacity = dim ? 0.1 : 0.5; } };
 }
 
 function buildFlat(module, group) {
   const [w, h, d] = module.size;
-  const pcbMat = new THREE.MeshStandardMaterial({ color: module.kind === 'bt' ? 0x15506a : 0x145a42, metalness: 0.18, roughness: 0.7 });
+  const pcbMat = new THREE.MeshStandardMaterial({ color: module.kind === 'bt' ? 0x1a6488 : 0x1a7554, metalness: 0.18, roughness: 0.7 });
   group.add(new THREE.Mesh(rounded(w, h, d, 0.05), pcbMat));
   const top = new THREE.Mesh(new THREE.PlaneGeometry(w - 0.35, d - 0.35), new THREE.MeshStandardMaterial({
     map: pinTexture(module), roughness: 0.8, metalness: 0.1,
@@ -319,35 +322,41 @@ function buildFlat(module, group) {
   addHeader(group, module);
   addSocket(module);
 
-  if (module.kind === 'sensor') {
-    [-2.4, -1.2, 0, 1.2, 2.4].forEach((x, i) => {
-      addChip(group, x, 0.5, 0, 0.85, 0.26, 0.7, 0x141a20, [0x3ff0c8, 0xff6b8a, 0x60a5fa, 0xffb347, 0x818cf8][i]);
-    });
-  } else if (module.kind === 'storage') {
-    addChip(group, -0.8, 0.5, 0, 1.5, 0.32, 1.1, 0x141a20, 0x4ade80);
-  } else if (module.kind === 'power') {
-    addChip(group, -0.8, 0.5, 0, 1.2, 0.3, 0.9, 0x141a20, 0xfacc15);
-    const bat = new THREE.Mesh(rounded(1.5, 0.4, 0.7, 0.05), new THREE.MeshStandardMaterial({ color: 0xd8dde2, roughness: 0.7 }));
-    bat.position.set(1.2, 0.48, 0); group.add(bat);
-  } else if (module.kind === 'bt') {
-    const sub = new THREE.Mesh(rounded(2.8, 0.2, 1.8, 0.03), new THREE.MeshStandardMaterial({ color: 0x0f3c52, roughness: 0.6 }));
-    sub.position.y = 0.4; group.add(sub);
-    const shield = new THREE.Mesh(rounded(1.5, 0.22, 1.0, 0.02), silverMat);
-    shield.position.set(0, 0.55, 0); group.add(shield);
-  } else if (module.kind === 'audio') {
-    addChip(group, -0.9, 0.5, 0, 1.1, 0.3, 0.9, 0x141a20, 0xc084fc);
-    const motor = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.22, 20), new THREE.MeshStandardMaterial({ color: 0x2b2f36, metalness: 0.8, roughness: 0.3, emissive: 0xff9f43, emissiveIntensity: 0.2 }));
-    motor.position.set(1.4, 0.5, 0); group.add(motor);
+  const chipColor = {
+    touch: 0x3ff0c8, aht21: 0x3ff0c8, em7028: 0xff6b8a, spl06: 0x60a5fa,
+    mpu6050: 0xffb347, lis2mdl: 0x818cf8, w25q: 0x4ade80, hp4570: 0xfacc15,
+    wt588: 0xc084fc,
+  };
+  if (module.kind === 'battery') {
+    const bat = new THREE.Mesh(rounded(1.6, 0.4, 0.8, 0.05), new THREE.MeshStandardMaterial({ color: 0xd8dde2, roughness: 0.7 }));
+    bat.position.set(0, 0.48, 0); group.add(bat);
+  } else if (module.kind === 'motor') {
+    const motor = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.22, 20), new THREE.MeshStandardMaterial({ color: 0x2b2f36, metalness: 0.8, roughness: 0.3, emissive: 0xff9f43, emissiveIntensity: 0.25 }));
+    motor.position.set(0, 0.5, 0); group.add(motor);
   } else if (module.kind === 'keys') {
-    for (const x of [-1.2, 0.3]) {
+    for (const x of [-0.8, 0.8]) {
       const key = new THREE.Mesh(rounded(0.65, 0.28, 0.65, 0.04), goldMat);
       key.position.set(x, 0.48, 0); group.add(key);
     }
-    const led = new THREE.Mesh(new THREE.SphereGeometry(0.16, 14, 14), new THREE.MeshStandardMaterial({ color: 0xff6b6b, emissive: 0xff3b3b, emissiveIntensity: 0.8 }));
-    led.position.set(1.5, 0.5, 0); group.add(led);
+  } else if (module.kind === 'led') {
+    const led = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 16), new THREE.MeshStandardMaterial({ color: 0xff6b6b, emissive: 0xff3b3b, emissiveIntensity: 0.9 }));
+    led.position.set(0, 0.52, 0); group.add(led);
+  } else if (module.kind === 'light') {
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(0.28, 16, 16), new THREE.MeshStandardMaterial({ color: 0xfff2c0, metalness: 0.1, roughness: 0.25, transparent: true, opacity: 0.85, emissive: 0xffd166, emissiveIntensity: 0.25 }));
+    dome.position.set(0, 0.5, 0); dome.scale.y = 0.6; group.add(dome);
+  } else if (module.kind === 'bt') {
+    const sub = new THREE.Mesh(rounded(2.6, 0.2, 1.6, 0.03), new THREE.MeshStandardMaterial({ color: 0x1a6488, roughness: 0.6 }));
+    sub.position.y = 0.4; group.add(sub);
+    const shield = new THREE.Mesh(rounded(1.3, 0.22, 0.9, 0.02), silverMat);
+    shield.position.set(0, 0.55, 0); group.add(shield);
+  } else {
+    addChip(group, 0, 0.5, 0, 0.85, 0.26, 0.65, 0x141a20, chipColor[module.kind] || 0x3ff0c8);
   }
   addShadow(group, w, d, -h / 2 - 0.02);
-  return { pcbMat, setState: ({ dim = false } = {}) => { pcbMat.transparent = dim; pcbMat.opacity = dim ? 0.3 : 1; } };
+  const edgeMat = new THREE.LineBasicMaterial({ color: module.color, transparent: true, opacity: 0.55 });
+  const edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w, h, d)), edgeMat);
+  group.add(edges); edgeObjects.push(edges);
+  return { pcbMat, setState: ({ dim = false } = {}) => { pcbMat.transparent = dim; pcbMat.opacity = dim ? 0.3 : 1; edgeMat.opacity = dim ? 0.12 : 0.55; } };
 }
 
 function buildScreen(module, group) {
@@ -361,7 +370,10 @@ function buildScreen(module, group) {
   addHeader(group, module);
   addSocket(module);
   addShadow(group, w, module.size[2], -h / 2 - 0.02);
-  return { pcbMat, setState: ({ dim = false } = {}) => { pcbMat.transparent = dim; pcbMat.opacity = dim ? 0.4 : 1; } };
+  const edgeMat = new THREE.LineBasicMaterial({ color: 0x4fd1ff, transparent: true, opacity: 0.55 });
+  const edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w, h, module.size[2])), edgeMat);
+  group.add(edges); edgeObjects.push(edges);
+  return { pcbMat, setState: ({ dim = false } = {}) => { pcbMat.transparent = dim; pcbMat.opacity = dim ? 0.4 : 1; edgeMat.opacity = dim ? 0.12 : 0.55; } };
 }
 
 const screenCanvas = document.createElement('canvas');
@@ -398,12 +410,17 @@ for (const module of MODULES) {
   pickables.push(hit);
 
   const el = document.createElement('div');
-  el.className = 'e-label';
+  el.className = 'e-label' + (module.kind === 'core' || module.kind === 'screen' ? '' : ' small');
   el.innerHTML = `<span>${module.label}</span><span class="m">${module.meta}</span>`;
   el.addEventListener('click', () => selectModule(module.id));
   const obj = new CSS2DObject(el);
   const yOff = module.kind === 'screen' ? module.size[1] / 2 + 0.8 : module.size[1] / 2 + 0.7;
-  obj.position.set(module.pos[0], module.pos[1] + yOff, module.pos[2]);
+  let lx = module.pos[0];
+  let lz = module.pos[2];
+  if (module.pos[0] < -6) lx -= 2.4;
+  else if (module.pos[0] > 6) lx += 2.4;
+  if (module.pos[2] > 6) lz += 1.9;
+  obj.position.set(lx, module.pos[1] + yOff, lz);
   scene.add(obj);
   labels.set(module.id, el);
 }
@@ -417,10 +434,15 @@ const state = {
   selected: null,
 };
 
-const powerOn = () => state.modules.power;
+const powerOn = () => state.modules.hp4570 && state.modules.battery;
 const screenOn = () => state.modules.screen && powerOn();
-const sensorOn = () => state.modules.sensor && powerOn();
-const otaOn = () => state.modules.bt && state.modules.storage && powerOn();
+const touchOn = () => state.modules.touch && screenOn();
+const tempOn = () => state.modules.aht21 && powerOn();
+const hrOn = () => state.modules.em7028 && powerOn();
+const presOn = () => state.modules.spl06 && powerOn();
+const stepOn = () => state.modules.mpu6050 && powerOn();
+
+const otaOn = () => state.modules.bt && state.modules.w25q && powerOn();
 
 let currentChapter = 0;
 let camTween = null;
@@ -449,13 +471,13 @@ function drawScreen() {
   const s = state.sensors;
   if (state.page === 'face') {
     ctx.fillStyle = '#4fd1ff'; ctx.font = '600 13px "Cascadia Mono", monospace';
-    ctx.fillText(`HR ${sensorOn() ? Math.round(s.hr) : '--'}`, 18, 132);
-    ctx.fillText(`STEP ${sensorOn() ? s.steps : '--'}`, 18, 156);
+    ctx.fillText(`HR ${hrOn() ? Math.round(s.hr) : '--'}`, 18, 132);
+    ctx.fillText(`STEP ${stepOn() ? s.steps : '--'}`, 18, 156);
     ctx.fillText(`BAT ${powerOn() ? Math.round(s.bat) + '%' : '--'}`, 18, 180);
     ctx.fillStyle = '#3ff0c8'; ctx.fillRect(18, 200, powerOn() ? 204 * (s.bat / 100) : 4, 4);
   } else if (state.page === 'heart') {
     ctx.fillStyle = '#ff7b8a'; ctx.font = '600 40px "Cascadia Mono", monospace';
-    ctx.fillText(sensorOn() ? Math.round(s.hr) : '--', 18, 150);
+    ctx.fillText(hrOn() ? Math.round(s.hr) : '--', 18, 150);
     ctx.font = '11px "Microsoft YaHei", sans-serif';
     ctx.fillText('BPM · 心率', 18, 170);
   } else if (state.page === 'ota') {
@@ -498,29 +520,34 @@ function bindSensors() {
   const now = new Date();
   set('time', `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
   set('date', `${now.getMonth() + 1}月${now.getDate()}日 ${['周日', '周一', '周二', '周三', '周四', '周五', '周六'][now.getDay()]}`);
-  const on = sensorOn();
-  set('temp-face', on ? `${s.temp.toFixed(1)}°C` : '--');
-  set('hr-face', on ? String(Math.round(s.hr)) : '--');
-  set('steps-face', on ? String(s.steps) : '--');
-  set('bat-face', powerOn() ? `${Math.round(s.bat)}%` : '--');
-  set('hr-bpm', on ? String(Math.round(s.hr)) : '--');
-  set('temp-msg', on ? `${s.temp.toFixed(1)}°C` : '--');
-  set('hr-msg', on ? String(Math.round(s.hr)) : '--');
-  set('steps-msg', on ? `${s.steps} ppm` : '--');
-  set('pres-msg', on ? `${Math.round(s.pres)} hPa` : '--');
+  const tOn = tempOn(), hOn = hrOn(), pOn = presOn(), stOn = stepOn(), pw = powerOn();
+  set('temp-face', tOn ? `${s.temp.toFixed(1)}°C` : '--');
+  set('hr-face', hOn ? String(Math.round(s.hr)) : '--');
+  set('steps-face', stOn ? String(s.steps) : '--');
+  set('bat-face', pw ? `${Math.round(s.bat)}%` : '--');
+  set('hr-bpm', hOn ? String(Math.round(s.hr)) : '--');
+  set('temp-msg', tOn ? `${s.temp.toFixed(1)}°C` : '--');
+  set('hr-msg', hOn ? String(Math.round(s.hr)) : '--');
+  set('steps-msg', stOn ? `${s.steps} ppm` : '--');
+  set('pres-msg', pOn ? `${Math.round(s.pres)} hPa` : '--');
   set('ota-version', state.ota.version);
-  document.querySelectorAll('#sim-temp, #sim-humi, #sim-pres, #sim-hr, #sim-steps, #sim-bat').forEach((el) => { el.disabled = !on; });
+  document.getElementById('sim-temp').disabled = !tOn;
+  document.getElementById('sim-humi').disabled = !tOn;
+  document.getElementById('sim-pres').disabled = !pOn;
+  document.getElementById('sim-hr').disabled = !hOn;
+  document.getElementById('sim-steps').disabled = !stOn;
+  document.getElementById('sim-bat').disabled = !pw;
   updateOffText();
   drawScreen();
 }
 
 screenEl.addEventListener('click', (event) => {
   const target = event.target.closest('[data-go]');
-  if (!target || !screenOn()) return;
+  if (!target || !screenOn() || !touchOn()) return;
   showPage(target.dataset.go);
 });
 document.querySelectorAll('[data-go]').forEach((btn) => {
-  btn.addEventListener('click', (event) => { event.stopPropagation(); if (screenOn()) showPage(btn.dataset.go); });
+  btn.addEventListener('click', (event) => { event.stopPropagation(); if (screenOn() && touchOn()) showPage(btn.dataset.go); });
 });
 
 const sims = [
@@ -543,7 +570,7 @@ sims.forEach(([key, inputId, outputId, fmt]) => {
 
 let heartTimer = null;
 document.getElementById('e-start-heart')?.addEventListener('click', () => {
-  if (!screenOn() || !sensorOn() || heartTimer) return;
+  if (!screenOn() || !hrOn() || heartTimer) return;
   const note = document.querySelector('[data-page="heart"] .e-note');
   if (note) note.textContent = '检测中… 请保持手指贴合';
   let ticks = 0;
@@ -608,11 +635,14 @@ function updatePinLabels(module) {
     el.textContent = `${i + 1} ${module.pins[i]?.[0] ?? ''}`;
     const obj = new CSS2DObject(el);
     if (module.kind === 'screen') {
-      obj.position.set(t * w * 0.8, -module.size[1] / 2 - 0.3, 0.7);
-    } else if (hp.axis === 'x') {
-      obj.position.set(t * w * 0.8, 0.85, hp.z + (module.header.rows > 1 ? 0.5 : 0.35));
+      obj.position.set(t * w * 0.8, -module.size[1] / 2 - 0.5, 0.7);
     } else {
-      obj.position.set(hp.x + (module.header.rows > 1 ? 0.5 : 0.35), 0.85, t * d * 0.8);
+      const spread = (i - (count - 1) / 2) * 0.95;
+      if (hp.axis === 'x') {
+        obj.position.set(spread, 0.55, hp.z >= 0 ? d / 2 + 1.1 : -d / 2 - 1.1);
+      } else {
+        obj.position.set(hp.x >= 0 ? w / 2 + 1.1 : -w / 2 - 1.1, 0.55, spread);
+      }
     }
     group.add(obj);
     pinLabelObjects.push(obj);
@@ -816,10 +846,10 @@ document.querySelector('.es100-rail')?.addEventListener('click', (event) => {
 const flowMat = new THREE.PointsMaterial({ size: 0.15, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true });
 function makeCurve(points) { return new THREE.CatmullRomCurve3(points.map((p) => new THREE.Vector3(...p))); }
 const flows = [
-  { id: 'sensor', color: 0x3ff0c8, curve: makeCurve([[-13, 1.8, 7], [-8, 2.4, 3], [0, 1.8, 0]]), count: 14, deps: ['sensor'] },
-  { id: 'storage', color: 0x4ade80, curve: makeCurve([[-3, 1.8, 10], [-1, 2.2, 4], [0, 1.8, 0]]), count: 12, deps: ['storage'] },
-  { id: 'bt', color: 0xffb347, curve: makeCurve([[14, 1.8, 6], [8, 2.2, 3], [0, 1.8, 0]]), count: 12, deps: ['bt'] },
-  { id: 'screen', color: 0x4fd1ff, curve: makeCurve([[0, 1.8, 0], [0, 3.0, -4], [0, 5.0, -9], [0, 6.0, -10]]), count: 14, deps: ['screen'] },
+  { id: 'sensor', color: 0x3ff0c8, curve: makeCurve([[-11, 1.8, -5], [-6, 2.2, -2], [0, 1.8, 0]]), count: 12, deps: ['aht21'] },
+  { id: 'storage', color: 0x4ade80, curve: makeCurve([[11, 1.8, -2.5], [6, 2.2, -1], [0, 1.8, 0]]), count: 10, deps: ['w25q'] },
+  { id: 'bt', color: 0xffb347, curve: makeCurve([[11, 1.8, 5], [6, 2.2, 3], [0, 1.8, 0]]), count: 10, deps: ['bt'] },
+  { id: 'screen', color: 0x4fd1ff, curve: makeCurve([[0, 1.8, 0], [0, 3.2, -4], [0, 5.0, -8], [0, 5.3, -9.2]]), count: 12, deps: ['screen'] },
 ];
 flows.forEach((flow) => {
   const positions = new Float32Array(flow.count * 3);
