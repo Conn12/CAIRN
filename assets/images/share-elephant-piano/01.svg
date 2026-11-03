@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600">
   <title>大象弹钢琴</title>
-  <desc>聚光灯下，一头大象用鼻子在三角钢琴上弹奏。</desc>
+  <desc>聚光灯下，一头大象用鼻子在三角钢琴上弹奏，琴键按下，音符缓缓上浮。</desc>
 
   <defs>
     <linearGradient id="ep-bg" x1="0" y1="0" x2="0" y2="1">
@@ -13,10 +13,76 @@
       <stop offset="0.6" stop-color="#e8b96a" stop-opacity="0.04"/>
       <stop offset="1" stop-color="#e8b96a" stop-opacity="0"/>
     </radialGradient>
+
+    <style>
+      .ep-glow,
+      .ep-note,
+      .ep-trunk,
+      .ep-tail,
+      .ep-key {
+        transform-box: view-box;
+      }
+      .ep-glow {
+        animation: ep-pulse 6s ease-in-out infinite;
+      }
+      .ep-note-a {
+        animation: ep-float 4.4s ease-in-out infinite;
+      }
+      .ep-note-b {
+        animation: ep-float 4.4s ease-in-out 0.9s infinite;
+      }
+      .ep-key {
+        animation: ep-press 1.8s ease-in-out infinite;
+      }
+      .ep-key-b { animation-delay: 0.18s; }
+      .ep-key-c { animation-delay: 0.46s; }
+      .ep-key-d { animation-delay: 0.74s; }
+      .ep-key-e { animation-delay: 0.32s; }
+      .ep-trunk {
+        transform-origin: 372px 330px;
+        animation: ep-sway 3.6s ease-in-out infinite;
+      }
+      .ep-tail {
+        transform-origin: 118px 372px;
+        animation: ep-tail-swing 3s ease-in-out infinite;
+      }
+
+      @keyframes ep-pulse {
+        0%, 100% { opacity: 0.72; }
+        50% { opacity: 1; }
+      }
+      @keyframes ep-float {
+        0%, 100% { transform: translateY(0); opacity: 0.45; }
+        50% { transform: translateY(-12px); opacity: 1; }
+      }
+      @keyframes ep-press {
+        0%, 100% { transform: translateY(0); }
+        45% { transform: translateY(2.4px); }
+      }
+      @keyframes ep-sway {
+        0%, 100% { transform: rotate(0deg); }
+        50% { transform: rotate(1.4deg); }
+      }
+      @keyframes ep-tail-swing {
+        0%, 100% { transform: rotate(0deg); }
+        50% { transform: rotate(-3deg); }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .ep-glow,
+        .ep-note-a,
+        .ep-note-b,
+        .ep-key,
+        .ep-trunk,
+        .ep-tail {
+          animation: none;
+        }
+      }
+    </style>
   </defs>
 
   <rect width="960" height="600" fill="url(#ep-bg)"/>
-  <circle cx="500" cy="320" r="340" fill="url(#ep-glow)"/>
+  <circle class="ep-glow" cx="500" cy="320" r="340" fill="url(#ep-glow)"/>
 
   <g fill="#e8b96a">
     <circle cx="120" cy="110" r="1.4" opacity="0.3"/>
@@ -41,10 +107,10 @@
       <path d="M384 369.6 l8 -0.8 v20 l-8 0.8 Z"/>
       <path d="M408 367.2 l8 -0.8 v20 l-8 0.8 Z"/>
       <path d="M432 364.8 l8 -0.8 v20 l-8 0.8 Z"/>
-      <path d="M456 362.4 l8 -0.8 v20 l-8 0.8 Z"/>
-      <path d="M480 360 l8 -0.8 v20 l-8 0.8 Z"/>
-      <path d="M504 357.6 l8 -0.8 v20 l-8 0.8 Z"/>
-      <path d="M528 355.2 l8 -0.8 v20 l-8 0.8 Z"/>
+      <path class="ep-key ep-key-b" d="M456 362.4 l8 -0.8 v20 l-8 0.8 Z"/>
+      <path class="ep-key ep-key-c" d="M480 360 l8 -0.8 v20 l-8 0.8 Z"/>
+      <path class="ep-key ep-key-d" d="M504 357.6 l8 -0.8 v20 l-8 0.8 Z"/>
+      <path class="ep-key ep-key-e" d="M528 355.2 l8 -0.8 v20 l-8 0.8 Z"/>
     </g>
     <path d="M378 416 L578 396" stroke="#b9c0d0" stroke-width="3"/>
 
@@ -60,8 +126,10 @@
   </g>
 
   <g>
-    <path d="M118 372 C94 380 84 400 92 416" fill="none" stroke="#7a8499" stroke-width="6" stroke-linecap="round"/>
-    <circle cx="92" cy="418" r="6" fill="#7a8499"/>
+    <g class="ep-tail">
+      <path d="M118 372 C94 380 84 400 92 416" fill="none" stroke="#7a8499" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="92" cy="418" r="6" fill="#7a8499"/>
+    </g>
 
     <rect x="180" y="438" width="30" height="84" rx="12" fill="#6b7589"/>
     <rect x="245" y="442" width="30" height="78" rx="12" fill="#6b7589"/>
@@ -83,8 +151,10 @@
       <ellipse cx="285" cy="520" rx="23" ry="8"/>
     </g>
 
-    <path d="M372 330 C420 332 450 350 470 378" fill="none" stroke="#8b93a7" stroke-width="30" stroke-linecap="round"/>
-    <path d="M470 378 C480 386 482 394 476 400" fill="none" stroke="#8b93a7" stroke-width="22" stroke-linecap="round"/>
+    <g class="ep-trunk">
+      <path d="M372 330 C420 332 450 350 470 378" fill="none" stroke="#8b93a7" stroke-width="30" stroke-linecap="round"/>
+      <path d="M470 378 C480 386 482 394 476 400" fill="none" stroke="#8b93a7" stroke-width="22" stroke-linecap="round"/>
+    </g>
     <g fill="none" stroke="#6b7589" stroke-width="2" stroke-linecap="round" opacity="0.6">
       <path d="M410 326 L412 350"/>
       <path d="M436 340 L438 362"/>
@@ -102,12 +172,16 @@
   </g>
 
   <g fill="#e8b96a">
-    <ellipse cx="616" cy="210" rx="9" ry="7"/>
-    <path d="M624 210 V180" stroke="#e8b96a" stroke-width="3"/>
-    <path d="M624 180 C636 184 640 192 638 200" fill="none" stroke="#e8b96a" stroke-width="3" stroke-linecap="round"/>
+    <g class="ep-note ep-note-a">
+      <ellipse cx="616" cy="210" rx="9" ry="7"/>
+      <path d="M624 210 V180" stroke="#e8b96a" stroke-width="3"/>
+      <path d="M624 180 C636 184 640 192 638 200" fill="none" stroke="#e8b96a" stroke-width="3" stroke-linecap="round"/>
+    </g>
 
-    <ellipse cx="692" cy="170" rx="7" ry="5.5"/>
-    <path d="M698 170 V144" stroke="#e8b96a" stroke-width="3"/>
-    <path d="M698 144 C708 148 712 154 710 162" fill="none" stroke="#e8b96a" stroke-width="3" stroke-linecap="round"/>
+    <g class="ep-note ep-note-b">
+      <ellipse cx="692" cy="170" rx="7" ry="5.5"/>
+      <path d="M698 170 V144" stroke="#e8b96a" stroke-width="3"/>
+      <path d="M698 144 C708 148 712 154 710 162" fill="none" stroke="#e8b96a" stroke-width="3" stroke-linecap="round"/>
+    </g>
   </g>
 </svg>

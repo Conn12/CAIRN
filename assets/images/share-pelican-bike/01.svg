@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600">
   <title>鹈鹕骑自行车</title>
-  <desc>夜色里，一只戴围巾的鹈鹕骑着自行车经过石堆与山丘。</desc>
+  <desc>夜色里，一只戴围巾的鹈鹕骑着自行车经过石堆与山丘，车轮转动，围巾随风飘动。</desc>
 
   <defs>
     <linearGradient id="pb-sky" x1="0" y1="0" x2="0" y2="1">
@@ -17,11 +17,77 @@
       <stop offset="0.55" stop-color="#000000" stop-opacity="0"/>
       <stop offset="1" stop-color="#000000" stop-opacity="0.35"/>
     </radialGradient>
+
+    <style>
+      .pb-wheel,
+      .pb-scarf {
+        transform-box: view-box;
+      }
+      .pb-wheel-left {
+        transform-origin: 430px 470px;
+        animation: pb-spin 2.2s linear infinite;
+      }
+      .pb-wheel-right {
+        transform-origin: 640px 470px;
+        animation: pb-spin 2.2s linear infinite;
+      }
+      .pb-scarf {
+        transform-origin: 600px 292px;
+        animation: pb-flutter 2.8s ease-in-out infinite;
+      }
+      .pb-road-line {
+        animation: pb-road 1.4s linear infinite;
+      }
+      .pb-stars {
+        animation: pb-twinkle 5s ease-in-out infinite;
+      }
+      .pb-moon-glow {
+        animation: pb-moon 6s ease-in-out infinite;
+      }
+      .pb-birds {
+        animation: pb-drift 7s ease-in-out infinite;
+      }
+
+      @keyframes pb-spin {
+        to { transform: rotate(360deg); }
+      }
+      @keyframes pb-road {
+        to { stroke-dashoffset: -34; }
+      }
+      @keyframes pb-twinkle {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.55; }
+      }
+      @keyframes pb-moon {
+        0%, 100% { opacity: 0.78; }
+        50% { opacity: 1; }
+      }
+      @keyframes pb-drift {
+        0%, 100% { transform: translateX(0); }
+        50% { transform: translateX(-12px); }
+      }
+      @keyframes pb-flutter {
+        0%, 100% { transform: rotate(0deg); }
+        50% { transform: rotate(-2.2deg); }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .pb-wheel-left,
+        .pb-wheel-right,
+        .pb-scarf,
+        .pb-road-line,
+        .pb-stars,
+        .pb-moon-glow,
+        .pb-birds {
+          animation: none;
+        }
+      }
+    </style>
   </defs>
 
   <rect width="960" height="600" fill="url(#pb-sky)"/>
 
-  <g fill="#e6e9ef">
+  <g class="pb-stars" fill="#e6e9ef">
     <circle cx="90" cy="86" r="1.4" opacity="0.5"/>
     <circle cx="170" cy="140" r="1" opacity="0.35"/>
     <circle cx="260" cy="72" r="1.6" opacity="0.55"/>
@@ -36,7 +102,7 @@
     <circle cx="210" cy="300" r="0.9" opacity="0.25"/>
   </g>
 
-  <circle cx="740" cy="160" r="155" fill="url(#pb-moon-glow)"/>
+  <circle class="pb-moon-glow" cx="740" cy="160" r="155" fill="url(#pb-moon-glow)"/>
   <circle cx="740" cy="160" r="78" fill="#e8b96a" opacity="0.92"/>
   <g fill="#0b0d11" opacity="0.08">
     <circle cx="716" cy="138" r="13"/>
@@ -44,7 +110,7 @@
     <circle cx="734" cy="192" r="6"/>
   </g>
 
-  <g fill="none" stroke="#8b93a7" stroke-width="2" stroke-linecap="round" opacity="0.35">
+  <g class="pb-birds" fill="none" stroke="#8b93a7" stroke-width="2" stroke-linecap="round" opacity="0.35">
     <path d="M380 180 q8 -8 16 0 q8 -8 16 0"/>
     <path d="M430 150 q6 -6 12 0 q6 -6 12 0"/>
   </g>
@@ -53,7 +119,7 @@
   <path d="M0 474 C150 446 300 476 440 484 C580 492 700 454 960 474 L960 600 L0 600 Z" fill="#0e1117"/>
   <path d="M0 540 C180 502 340 532 520 522 C700 512 840 502 960 522 L960 600 L0 600 Z" fill="#151a23"/>
 
-  <path d="M-20 574 C160 542 360 560 540 550 C720 540 860 542 980 558" fill="none" stroke="#e8b96a" stroke-width="2" stroke-dasharray="18 16" opacity="0.22"/>
+  <path class="pb-road-line" d="M-20 574 C160 542 360 560 540 550 C720 540 860 542 980 558" fill="none" stroke="#e8b96a" stroke-width="2" stroke-dasharray="18 16" opacity="0.22"/>
 
   <g fill="none" stroke="#8b93a7" stroke-width="3" stroke-linecap="round" opacity="0.25">
     <path d="M296 432 C326 426 352 429 378 434"/>
@@ -66,8 +132,10 @@
   <g stroke="#e8b96a" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round">
     <circle cx="430" cy="470" r="52"/>
     <circle cx="640" cy="470" r="52"/>
-    <g stroke-width="2" opacity="0.55">
+    <g class="pb-wheel pb-wheel-left" stroke-width="2" opacity="0.55">
       <path d="M430 418 V522 M378 470 H482 M393 433 L467 507 M467 433 L393 507"/>
+    </g>
+    <g class="pb-wheel pb-wheel-right" stroke-width="2" opacity="0.55">
       <path d="M640 418 V522 M588 470 H692 M603 433 L677 507 M677 433 L603 507"/>
     </g>
     <path d="M430 470 L500 404 L520 470 Z"/>
@@ -107,8 +175,10 @@
 
   <path d="M600 250 Q610 238 622 248" fill="none" stroke="#e6e9ef" stroke-width="7" stroke-linecap="round"/>
 
-  <path d="M594 292 C576 308 550 314 526 304 C538 322 570 324 596 310 Z" fill="#7dcfff" opacity="0.9"/>
-  <path d="M526 304 C500 294 478 298 462 286 C470 306 498 318 528 318 Z" fill="#7dcfff" opacity="0.6"/>
+  <g class="pb-scarf">
+    <path d="M594 292 C576 308 550 314 526 304 C538 322 570 324 596 310 Z" fill="#7dcfff" opacity="0.9"/>
+    <path d="M526 304 C500 294 478 298 462 286 C470 306 498 318 528 318 Z" fill="#7dcfff" opacity="0.6"/>
+  </g>
 
   <path d="M522 338 C552 332 582 352 602 384 C576 394 544 382 522 338 Z" fill="#d5dae4"/>
   <g fill="none" stroke="#b9c0d0" stroke-width="2" stroke-linecap="round">

@@ -13,8 +13,8 @@ export const shareCategories: ShareCategory[] = [
   {
     title: '图片分享',
     items: [
-      { id: 'pelican-bike', title: '鹈鹕骑自行车', sub: '矢量插画' },
-      { id: 'elephant-piano', title: '大象弹钢琴', sub: '矢量插画' },
+      { id: 'pelican-bike', title: '鹈鹕骑自行车', sub: '矢量动图' },
+      { id: 'elephant-piano', title: '大象弹钢琴', sub: '矢量动图' },
     ],
   },
   {
