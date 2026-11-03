@@ -666,7 +666,7 @@ function addArrow(group, from, to, color, radius) {
   group.add(cone);
 }
 
-export function buildTrace(trace) {
+export function buildTrace(trace, id) {
   const group = new THREE.Group();
   const radius = (trace.width ?? 0.1) * 1.3;
   const mat = new THREE.MeshStandardMaterial({
@@ -698,7 +698,24 @@ export function buildTrace(trace) {
     addArrow(group, points[points.length - 2], points[points.length - 1], trace.color ?? 0x38f0d0, radius);
   }
 
-  return { group, material: mat };
+  // 不可见的拾取圆柱：让细线也能被点到
+  const hitMat = new THREE.MeshBasicMaterial({
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+    colorWrite: false,
+  });
+  const hits = [];
+  for (let i = 0; i < points.length - 1; i += 1) {
+    const hit = cylinderBetween(points[i], points[i + 1], Math.max(0.3, radius * 2.4), hitMat);
+    if (hit) {
+      hit.userData.traceId = id;
+      group.add(hit);
+      hits.push(hit);
+    }
+  }
+
+  return { group, material: mat, hits };
 }
 
 export class PolylineCurve extends THREE.Curve {

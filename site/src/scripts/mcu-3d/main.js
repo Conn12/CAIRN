@@ -7,7 +7,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { BLOCKS, BLOCK_MAP, CHAPTERS, FLOWS, TRACES } from './content.js';
-import { INFO } from './info.js';
+import { INFO, TRACE_INFO } from './info.js';
 import { buildModule, buildTrace, PolylineCurve, createPcbTexture, createDieTexture } from './geometry.js';
 
 const stage = document.getElementById('mcu-stage');
@@ -260,6 +260,10 @@ const moduleVisuals = new Map();
 const edgeObjects = [];
 const labelObjects = new Map();
 const dimStates = new Map();
+const traceMats = new Map();
+const traceLabelEls = new Map();
+const traceHitMeshes = [];
+let selectedTraceId = null;
 
 const APB2_IDS = ['gpioa', 'gpiob', 'gpioc', 'gpiod', 'adc1', 'adc2', 'tim1', 'spi1', 'usart1', 'exti'];
 const APB1_IDS = ['tim2', 'usart2', 'i2c', 'spi2', 'can', 'usb', 'rtc', 'iwdg'];
@@ -290,23 +294,43 @@ function addBlock(spec) {
   obj.position.set(spec.pos[0], spec.pos[1] + yOff, spec.pos[2]);
   scene.add(obj);
   labelObjects.set(spec.id, { obj, el, spec });
+
+  el.style.pointerEvents = 'auto';
+  el.style.cursor = 'pointer';
+  el.addEventListener('click', (event) => {
+    event.stopPropagation();
+    selectBlock(spec.id);
+  });
+  el.addEventListener('mouseenter', () => setHover(spec.id));
+  el.addEventListener('mouseleave', () => setHover(null));
 }
 
 BLOCKS.forEach(addBlock);
 
 // ---------- 走线 ----------
 Object.entries(TRACES).forEach(([id, trace]) => {
-  const built = buildTrace(trace);
+  const built = buildTrace(trace, id);
   built.group.userData.traceId = id;
   scene.add(built.group);
+  traceMats.set(id, built.material);
+  built.hits.forEach((hit) => traceHitMeshes.push(hit));
 
   if (trace.label) {
     const el = document.createElement('div');
     el.className = 'trace-label';
     el.textContent = trace.label;
+    el.style.pointerEvents = 'auto';
+    el.style.cursor = 'pointer';
+    el.addEventListener('click', (event) => {
+      event.stopPropagation();
+      selectTrace(id);
+    });
+    el.addEventListener('mouseenter', () => setHoverTrace(id));
+    el.addEventListener('mouseleave', () => setHoverTrace(null));
     const obj = new CSS2DObject(el);
     obj.position.set(trace.labelPos[0], trace.labelPos[1], trace.labelPos[2]);
     scene.add(obj);
+    traceLabelEls.set(id, el);
   }
 });
 
@@ -378,6 +402,7 @@ let activeFlow = 'fetch';
 let manualFlow = null;
 let selectedId = null;
 let hoveredId = null;
+let hoveredTraceId = null;
 
 const elTitle = document.getElementById('panel-title');
 const elMeta = document.getElementById('panel-meta');
@@ -495,7 +520,40 @@ function clearSelectedLabel() {
   labelObjects.forEach(({ el }) => el.classList.remove('selected'));
 }
 
+function clearTraceSelection() {
+  if (!selectedTraceId) return;
+  const mat = traceMats.get(selectedTraceId);
+  if (mat) mat.emissiveIntensity = 0.5;
+  const el = traceLabelEls.get(selectedTraceId);
+  if (el) el.classList.remove('selected');
+  selectedTraceId = null;
+}
+
+function selectTrace(id) {
+  clearTraceSelection();
+  selectedId = null;
+  clearSelectedLabel();
+  applyBlockState();
+  selectedTraceId = id;
+  const mat = traceMats.get(id);
+  if (mat) mat.emissiveIntensity = 1.4;
+  const el = traceLabelEls.get(id);
+  if (el) el.classList.add('selected');
+  const trace = TRACES[id];
+  showPanel({
+    label: trace?.label || '总线',
+    meta: 'BUS · 总线通路',
+    ...(TRACE_INFO[id] || {
+      what: '这是一条模块之间的总线通路。',
+      does: '在模块之间传输地址、数据或控制信号。',
+      how: '硬件自动工作，软件通过外设寄存器访问。',
+    }),
+    tags: ['总线'],
+  });
+}
+
 function selectBlock(id) {
+  clearTraceSelection();
   selectedId = null;
   clearSelectedLabel();
   applyBlockState();
@@ -521,6 +579,7 @@ function selectChapter(index, animate = true) {
   setFlow(chapter.flow);
   selectedId = null;
   clearSelectedLabel();
+  clearTraceSelection();
   applyBlockState();
   if (location.hash !== `#${chapter.no}`) {
     history.replaceState(null, '', `#${chapter.no}`);
@@ -629,10 +688,11 @@ const pointer = new THREE.Vector2();
 let pointerDown = null;
 
 function pick(clientX, clientY) {
-  pointer.x = (clientX / W()) * 2 - 1;
-  pointer.y = -(clientY / H()) * 2 + 1;
+  const rect = renderer.domElement.getBoundingClientRect();
+  pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+  pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
   raycaster.setFromCamera(pointer, camera);
-  const hits = raycaster.intersectObjects(blockMeshList, false);
+  const hits = raycaster.intersectObjects(blockMeshList.concat(traceHitMeshes), false);
   return hits.length ? hits[0].object : null;
 }
 
@@ -658,9 +718,32 @@ function setHover(id) {
   }
 }
 
+function setHoverTrace(id) {
+  if (hoveredTraceId === id) return;
+  if (hoveredTraceId) {
+    const prev = traceLabelEls.get(hoveredTraceId);
+    if (prev) prev.classList.remove('hot');
+  }
+  hoveredTraceId = id;
+  if (hoveredTraceId) {
+    const next = traceLabelEls.get(hoveredTraceId);
+    if (next) next.classList.add('hot');
+    renderer.domElement.style.cursor = 'pointer';
+  } else {
+    renderer.domElement.style.cursor = 'grab';
+  }
+}
+
 renderer.domElement.addEventListener('pointermove', (event) => {
   const hit = pick(event.clientX, event.clientY);
-  setHover(hit ? hit.userData.spec.id : null);
+  const traceId = hit?.userData.traceId ?? null;
+  if (traceId) {
+    setHover(null);
+    setHoverTrace(traceId);
+  } else {
+    setHoverTrace(null);
+    setHover(hit ? hit.userData.spec.id : null);
+  }
 });
 
 renderer.domElement.addEventListener('pointerdown', (event) => {
@@ -676,10 +759,12 @@ renderer.domElement.addEventListener('pointerup', (event) => {
 
   const hit = pick(event.clientX, event.clientY);
   if (hit) {
-    selectBlock(hit.userData.spec.id);
+    if (hit.userData.traceId) selectTrace(hit.userData.traceId);
+    else selectBlock(hit.userData.spec.id);
   } else {
     selectedId = null;
     clearSelectedLabel();
+    clearTraceSelection();
     applyBlockState();
     const chapter = CHAPTERS[currentChapter];
     showPanel({
@@ -775,7 +860,7 @@ function animate() {
 }
 
 // ---------- 启动 ----------
-window.__MCU3D_DEBUG = { THREE, renderer, scene, camera, stage, composer, bloomPass, selectBlock };
+window.__MCU3D_DEBUG = { THREE, renderer, scene, camera, stage, composer, bloomPass, selectBlock, selectTrace };
 const hashNo = location.hash.replace('#', '');
 const hashIndex = CHAPTERS.findIndex((chapter) => chapter.no === hashNo);
 selectChapter(hashIndex >= 0 ? hashIndex : 0, false);

@@ -460,7 +460,8 @@
 
 /* ---------- 3D 标签 ---------- */
 .label {
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
   display: flex;
   flex-direction: column;
   gap: 1px;
@@ -520,7 +521,8 @@
 }
 
 .trace-label {
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
   font-family: var(--mcu-mono);
   font-size: 10.5px;
   letter-spacing: 0.03em;
@@ -531,6 +533,14 @@
   border-radius: 2px;
   white-space: nowrap;
   text-shadow: 0 0 8px rgba(0, 0, 0, 0.85);
+}
+
+.trace-label.hot,
+.trace-label.selected,
+.trace-label:hover {
+  color: #ffe1b0;
+  border-left-color: var(--mcu-gold);
+  box-shadow: 0 0 14px rgba(255, 179, 71, 0.3);
 }
 
 .mcu-stage.no-labels .trace-label {

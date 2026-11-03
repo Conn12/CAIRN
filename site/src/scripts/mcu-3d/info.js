@@ -159,3 +159,92 @@ export const INFO = {
     how: 'IWDG 由内部 40kHz RC 驱动，开 IWDG_KR 启动并按 0xAAAA 喂狗；WWDG 由 PCLK1 驱动，配置窗口值和计数器。',
   },
 };
+
+// 每条总线的讲解
+export const TRACE_INFO = {
+  icode: {
+    what: 'ICode 是 Cortex-M3 的指令总线，直接连接 Flash 接口，不经过总线矩阵。',
+    does: 'CPU 取指时指令从这里送到内核，指令预取在 Flash 接口完成。',
+    how: '硬件自动工作。想提高取指效率，可以在 FLASH_ACR 里开启预取缓冲并配置正确的等待周期。',
+  },
+  dcode: {
+    what: 'DCode 是内核的数据总线，接入总线矩阵。',
+    does: '常量加载、调试访问走这条线，经矩阵到 Flash 或 SRAM。',
+    how: '无需配置。访问 const 数据和调试时自动使用。',
+  },
+  system: {
+    what: '系统总线是内核的外设总线，接入总线矩阵。',
+    does: 'CPU 访问 SRAM、Flash 和所有 APB 外设都经过这条总线。',
+    how: '无需配置。读写外设寄存器时自动走这条线。',
+  },
+  'matrix-flashif': {
+    what: '总线矩阵到 Flash 接口的 AHB 通路。',
+    does: 'DMA 等主设备经矩阵访问 Flash 时走这条线。',
+    how: '硬件自动。DMA 访问 Flash 时要和 CPU 取指分时占用。',
+  },
+  'flashif-flash': {
+    what: 'Flash 接口到 Flash 存储器的读取通道。',
+    does: '把接口的读请求送到 Flash 阵列，返回指令或数据。',
+    how: '硬件自动。擦写 Flash 时不能同时读取。',
+  },
+  'matrix-sram': {
+    what: '总线矩阵到 SRAM 的通路。',
+    does: 'CPU 和 DMA 访问 SRAM 时走这条线。',
+    how: '硬件自动。DMA 和 CPU 同时访问时会分时占用。',
+  },
+  'matrix-fsmc': {
+    what: '总线矩阵到 FSMC 的通路。',
+    does: '大容量型号访问外部存储器时使用。',
+    how: 'C8T6 没有 FSMC，这条线在本型号上不存在。',
+  },
+  'matrix-ahb': {
+    what: 'AHB 系统总线，是总线矩阵通向 APB 桥的主干。',
+    does: '把 CPU/DMA 的访问送到桥接 1/2，再分发到 APB1/APB2。',
+    how: '硬件自动。APB1/APB2 的频率由 RCC 的 APB 预分频决定。',
+  },
+  'ahb-b2': {
+    what: 'AHB 到桥接 2 的分支。',
+    does: '把访问送到 APB2 域。',
+    how: '硬件自动。',
+  },
+  'ahb-b1': {
+    what: 'AHB 到桥接 1 的分支。',
+    does: '把访问送到 APB1 域。',
+    how: '硬件自动。',
+  },
+  'b2-apb2': {
+    what: '桥接 2 到 APB2 外设板的通路。',
+    does: '把 AHB 访问转换成 APB2 时序。',
+    how: '使用外设前先开 RCC_APB2ENR 对应时钟。',
+  },
+  'b1-apb1': {
+    what: '桥接 1 到 APB1 外设板的通路。',
+    does: '把 AHB 访问转换成 APB1 时序。',
+    how: '使用外设前先开 RCC_APB1ENR 时钟；APB1 不能超过 36MHz。',
+  },
+  'dma1-matrix': {
+    what: 'DMA1 到总线矩阵的 DMA 总线。',
+    does: 'DMA1 作为主设备访问 SRAM、Flash 和外设时走这条线。',
+    how: '配置 DMA 通道后，硬件自动发起传输。',
+  },
+  'dma2-matrix': {
+    what: 'DMA2 到总线矩阵的 DMA 总线（部分型号）。',
+    does: 'DMA2 的访问通路。',
+    how: 'C8T6 没有 DMA2。',
+  },
+  'dma-request': {
+    what: 'DMA 请求线，从外设回到 DMA 控制器。',
+    does: 'USART、SPI、ADC、TIM 等外设准备好数据时，向 DMA 发请求。',
+    how: '在 DMA 通道配置里选择对应外设请求，硬件自动握手。',
+  },
+  'rcc-matrix': {
+    what: 'RCC 到总线矩阵的时钟/复位通路。',
+    does: '把 HCLK 送到内核和矩阵，复位信号也由此分发。',
+    how: '由 RCC 配置 AHB 预分频；复位后外设时钟默认关闭。',
+  },
+  'rcc-bridge': {
+    what: 'RCC 到 AHB2APB 桥的时钟线。',
+    does: '把 PCLK1/PCLK2 送到 APB1/APB2 域。',
+    how: 'RCC 的 APB 预分频决定频率，APB1 ≤36MHz，APB2 ≤72MHz。',
+  },
+};
