@@ -100,9 +100,10 @@ import { models } from '../../data/models';
     display: flex;
     flex-direction: column;
     border: 1px solid var(--line);
-    border-radius: 8px;
+    border-radius: 3px;
     overflow: hidden;
-    background: var(--bg-soft);
+    background: var(--panel-face);
+    box-shadow: inset 0 1px #ffffff16, 0 6px 18px #0004;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
   }
 
@@ -124,7 +125,7 @@ import { models } from '../../data/models';
     flex: 0 0 2.25rem;
     height: 2.25rem;
     border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--line));
-    border-radius: 50%;
+    border-radius: 3px;
     background: color-mix(in srgb, var(--accent) 9%, var(--bg));
     color: var(--accent);
     font-size: 1.1rem;
@@ -153,6 +154,17 @@ import { models } from '../../data/models';
       linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
       linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
     background-size: 22px 22px;
+    box-shadow: inset 0 0 20px #000a;
+    pointer-events: none;
+  }
+
+  .model-preview::before {
+    content: "";
+    position: absolute;
+    inset: 0.65rem;
+    border: 1px solid color-mix(in srgb, var(--accent) 42%, transparent);
+    clip-path: polygon(0 0, 20% 0, 20% 2px, calc(100% - 20%) 2px, calc(100% - 20%) 0, 100% 0, 100% 100%, calc(100% - 20%) 100%, calc(100% - 20%) calc(100% - 2px), 20% calc(100% - 2px), 20% 100%, 0 100%);
+    pointer-events: none;
   }
 
   .preview-chip {
