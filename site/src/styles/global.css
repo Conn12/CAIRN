@@ -140,34 +140,98 @@ img {
 
 .section-nav {
   display: flex;
-  gap: 0.25rem;
+  gap: 0.18rem;
   margin-left: clamp(0rem, 2vw, 1.5rem);
+  padding: 0.22rem;
+  border: 1px solid #35343a;
+  border-radius: 999px;
+  background: #111216;
+  box-shadow: inset 0 1px 3px #08090b;
 }
 
 .section-link {
-  padding: 0.55rem 0.7rem;
-  border-radius: 4px;
+  padding: 0.42rem 0.9rem;
+  border-radius: 999px;
   font-size: 0.85rem;
   white-space: nowrap;
   color: var(--dim);
   transition:
     color 0.15s ease,
-    background 0.15s ease;
+    background 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .section-link:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: #292b31;
   color: var(--text);
 }
 
 .section-link.active {
-  background: rgba(228, 191, 131, 0.06);
-  color: var(--gold);
-  box-shadow: inset 0 -1px var(--gold);
+  background: linear-gradient(160deg, #f2d6a8, #c99a61);
+  color: #261b10;
+  font-weight: 650;
+  box-shadow: inset 0 1px #f9e6c9, 0 2px 5px #09090c;
+}
+
+.section-link:active {
+  box-shadow: inset 0 1px 3px #0005;
+}
+
+/* ---------- 模型工作台控件 ---------- */
+
+.mcu-stage {
+  --control-accent: #76e4cb;
+}
+
+.es100-stage {
+  --control-accent: #80d9f1;
+}
+
+:is(.mcu-stage, .es100-stage) :is(.rail, .es100-rail, .nav-buttons, .es100-nav) button {
+  min-height: 2.2rem;
+  border: 1px solid #ffffff30;
+  border-radius: 8px;
+  background: linear-gradient(#243038, #10191f);
+  color: #d1dce1;
+  box-shadow: inset 0 1px #ffffff12, 0 2px 4px #0005;
+  transition: border-color 150ms ease, box-shadow 150ms ease, color 150ms ease;
+}
+
+:is(.mcu-stage, .es100-stage) :is(.rail, .es100-rail, .nav-buttons, .es100-nav) button:hover {
+  border-color: var(--control-accent);
+  color: #fff;
+}
+
+:is(.mcu-stage, .es100-stage) :is(.rail, .es100-rail) button.active {
+  border-color: var(--control-accent);
+  background: color-mix(in srgb, var(--control-accent) 25%, #10191f);
+  color: #f4fafb;
+  box-shadow: inset 0 -2px var(--control-accent);
+}
+
+.es100-stage .es100-rail button.danger.active {
+  --control-accent: var(--gold);
+}
+
+:is(.mcu-stage, .es100-stage) :is(.nav-buttons, .es100-nav) button:last-child:not(:disabled) {
+  border-color: var(--control-accent);
+  background: linear-gradient(#edf8f8, var(--control-accent));
+  color: #102025;
+  font-weight: 650;
+}
+
+:is(.mcu-stage, .es100-stage) :is(.rail, .es100-rail, .nav-buttons, .es100-nav) button:active {
+  box-shadow: inset 0 2px 5px #0008;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section-link,
+  :is(.mcu-stage, .es100-stage) :is(.rail, .es100-rail, .nav-buttons, .es100-nav) button {
+    transition: none;
+  }
 }
 
 /* ---------- 双栏骨架 ---------- */
-
 .shell {
   display: grid;
   grid-template-columns: 14rem minmax(0, 1fr);
@@ -902,7 +966,8 @@ main {
 
   .section-nav {
     margin-left: auto;
-    gap: 0.1rem;
+    gap: 0;
+    padding: 0.16rem;
   }
 
   .section-link {
